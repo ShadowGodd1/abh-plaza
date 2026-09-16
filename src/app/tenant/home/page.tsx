@@ -34,9 +34,11 @@ export default async function TenantHomePage() {
     <div className="max-w-lg mx-auto px-4 py-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-sm text-text-3">ABH PLAZA</p>
-          <h1 className="text-xl font-semibold text-text-primary">{greeting}, {tenant.name}</h1>
+        <div className="flex items-center gap-3">
+          <img src="/logo.jpeg" alt="ABH Plaza" className="h-8 w-auto rounded" />
+          <div>
+            <h1 className="text-xl font-semibold text-text-primary">{greeting}, {tenant.name}</h1>
+          </div>
         </div>
         <button className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center" aria-label="Notifications">
           <span className="w-2 h-2 rounded-full bg-gold" />

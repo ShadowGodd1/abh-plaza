@@ -100,9 +100,7 @@ export default function Sidebar({ role, user }: SidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 h-16 border-b border-white/10 flex-shrink-0">
-        <div className="w-8 h-8 rounded-[var(--radius-md)] bg-gold flex items-center justify-center flex-shrink-0">
-          <span className="text-ink font-bold text-sm">ABH</span>
-        </div>
+        <img src="/logo.jpeg" alt="ABH Plaza" className="w-8 h-8 rounded-[var(--radius-md)] object-cover flex-shrink-0" />
         {!collapsed && (
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">ABH PLAZA</p>

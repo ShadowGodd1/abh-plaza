@@ -35,8 +35,8 @@ export default function OwnerHomeClient({ metrics, greeting }: OwnerHomeClientPr
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-sm text-text-3">ABH PLAZA</p>
+        <div className="flex items-center gap-3">
+          <img src="/logo.jpeg" alt="ABH Plaza" className="h-8 w-auto rounded" />
           <h1 className="text-xl font-semibold text-text-primary">{greeting}, {owner.name}</h1>
         </div>
       </div>

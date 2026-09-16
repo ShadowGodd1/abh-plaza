@@ -32,13 +32,7 @@ export default function RecoverPage() {
     <div className="min-h-screen flex items-center justify-center bg-paper p-6">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-[var(--radius-md)] bg-gold flex items-center justify-center">
-            <span className="text-ink font-bold text-sm">ABH</span>
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-text-primary">ABH PLAZA</p>
-            <p className="text-[10px] text-text-3">PROPERTY MANAGEMENT SYSTEM</p>
-          </div>
+          <img src="/logo.jpeg" alt="ABH Plaza" className="h-10 w-auto rounded-[var(--radius-md)]" />
         </div>
 
         {step === "phone" && (

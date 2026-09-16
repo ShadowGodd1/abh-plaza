@@ -49,15 +49,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex lg:w-1/2 bg-ink relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink-2 to-ink" />
         <div className="relative z-10 flex flex-col justify-center px-16">
-          <div className="w-16 h-16 rounded-[var(--radius-xl)] bg-gold flex items-center justify-center mb-8">
-            <span className="text-ink font-bold text-2xl">ABH</span>
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-4">
-            ABH PLAZA
-          </h1>
-          <p className="text-gold/80 text-lg mb-2">
-            Property Management System
-          </p>
+          <img src="/logo.jpeg" alt="ABH Plaza" className="w-48 h-auto mb-8" />
           <p className="text-white/40 text-sm max-w-sm mt-6">
             Professional property management for modern buildings. 
             Manage units, billing, maintenance, and communications 
@@ -73,14 +65,8 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center p-6 bg-paper">
         <div className="w-full max-w-sm">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 rounded-[var(--radius-md)] bg-gold flex items-center justify-center">
-              <span className="text-ink font-bold text-sm">ABH</span>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-text-primary">ABH PLAZA</p>
-              <p className="text-[10px] text-text-3">PROPERTY MANAGEMENT SYSTEM</p>
-            </div>
+          <div className="lg:hidden mb-8">
+            <img src="/logo.jpeg" alt="ABH Plaza" className="h-16 w-auto" />
           </div>
 
           <h2 className="text-2xl font-semibold text-text-primary mb-2">Sign in</h2>
