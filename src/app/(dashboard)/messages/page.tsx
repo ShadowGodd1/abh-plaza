@@ -10,12 +10,12 @@ export default async function MessagesPage() {
 
   const messages = rawMessages.map((m: any) => ({
     id: m.id,
-    person: m.sender_name || m.tenant || "Unknown",
+    person: m.person || m.sender_name || m.tenant || "Unknown",
     unit: m.unit || "",
     subject: m.subject || "",
-    lastMessage: m.body || m.preview || "",
-    timestamp: m.sent_at || m.date || "",
-    timestampFormatted: formatMessageTime(m.sent_at || m.date),
+    lastMessage: m.lastMessage || m.body || m.preview || "",
+    timestamp: m.timestamp || m.sent_at || m.date || "",
+    timestampFormatted: formatMessageTime(m.timestamp || m.sent_at || m.date),
     unread: m.unread || false,
     messages: m.messages || [],
   }));

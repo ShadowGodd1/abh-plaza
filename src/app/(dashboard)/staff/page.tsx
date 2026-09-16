@@ -13,11 +13,11 @@ export default async function StaffPage() {
     initials: (s.name || "Unknown").split(" ").map((n: string) => n[0]).join(""),
     role: s.role || "",
     phone: s.phone || "",
-    paymentSchedule: s.payment_schedule || "",
+    paymentSchedule: s.payment_schedule || s.schedule || "",
     amount: s.amount || 0,
     amountFormatted: new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 }).format((s.amount || 0) / 100),
-    schedule: s.payment_schedule || "",
-    lastPayment: s.last_payment || null,
+    schedule: s.payment_schedule || s.schedule || "",
+    lastPayment: s.last_payment || s.lastPaid || null,
   }));
 
   return (
