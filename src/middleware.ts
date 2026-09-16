@@ -65,10 +65,10 @@ export async function middleware(request: NextRequest) {
 
   const role = user.user_metadata?.role || user.app_metadata?.role || "admin";
 
-  if (pathname.startsWith("/tenant") && role !== "tenant") {
+  if ((pathname.startsWith("/tenant/") || pathname === "/tenant") && role !== "tenant") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
-  if (pathname.startsWith("/owner") && role !== "owner") {
+  if ((pathname.startsWith("/owner/") || pathname === "/owner") && role !== "owner") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
