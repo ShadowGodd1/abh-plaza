@@ -202,6 +202,18 @@ export async function getDashboardMetrics() {
   ]);
 
   const units = unitsRes.data || [];
+  if (units.length === 0 && !invoicesRes.data && !paymentsRes.data) {
+    return {
+      occupiedUnits: { count: demo.totalOccupied, total: demo.totalUnits, percentage: demo.occupancyRate },
+      vacantUnits: { count: demo.totalVacant, percentage: Math.round((demo.totalVacant / demo.totalUnits) * 100) },
+      collection: { amount: demo.totalCollection, rate: demo.collectionRate },
+      overdue: { amount: demo.totalOverdue, invoices: demo.overdueCount },
+      recentPayments: demo.DEMO_PAYMENTS.slice(0, 5),
+      outstandingInvoices: demo.DEMO_INVOICES.filter((i) => i.status !== "paid" && i.status !== "void").slice(0, 5),
+      maintenanceOpen: demo.DEMO_MAINTENANCE.filter((r) => r.status !== "resolved").slice(0, 5),
+    };
+  }
+
   const occupied = units.filter((u: { status: string }) => u.status === "occupied").length;
   const vacant = units.filter((u: { status: string }) => u.status === "vacant").length;
   const total = units.length;

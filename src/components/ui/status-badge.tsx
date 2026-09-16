@@ -23,7 +23,7 @@ export default function StatusBadge({ status, size = "md", className }: StatusBa
         className
       )}
     >
-      <span className={cn("w-1.5 h-1.5 rounded-full", colors.dot)} />
+      <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", colors.dot)} />
       {label}
     </span>
   );

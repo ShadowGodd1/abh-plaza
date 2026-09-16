@@ -7,6 +7,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import MetricCard from "@/components/ui/metric-card";
+import StatusBadge from "@/components/ui/status-badge";
 import { getDashboardMetrics } from "@/lib/data";
 import QuickActions from "./quick-actions";
 import DashboardCharts from "./dashboard-charts";
@@ -26,26 +27,6 @@ function formatDate(date: string | Date): string {
     month: "short",
     day: "numeric",
   }).format(new Date(date));
-}
-
-function StatusBadgeInline({ status }: { status: string }) {
-  const map: Record<string, { bg: string; text: string; dot: string; label: string }> = {
-    completed: { bg: "bg-success/10", text: "text-success", dot: "bg-success", label: "Completed" },
-    paid: { bg: "bg-success/10", text: "text-success", dot: "bg-success", label: "Paid" },
-    pending: { bg: "bg-gold/10", text: "text-gold", dot: "bg-gold", label: "Pending" },
-    overdue: { bg: "bg-danger/10", text: "text-danger", dot: "bg-danger", label: "Overdue" },
-    open: { bg: "bg-danger/10", text: "text-danger", dot: "bg-danger", label: "Open" },
-    in_progress: { bg: "bg-gold/10", text: "text-gold", dot: "bg-gold", label: "In Progress" },
-    resolved: { bg: "bg-success/10", text: "text-success", dot: "bg-success", label: "Resolved" },
-    void: { bg: "bg-surface-2", text: "text-text-3", dot: "bg-text-3", label: "Void" },
-  };
-  const c = map[status] || map.pending;
-  return (
-    <span className={`inline-flex items-center gap-1.5 font-medium rounded-[var(--radius-full)] px-2 py-0.5 text-xs ${c.bg} ${c.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-      {c.label}
-    </span>
-  );
 }
 
 function getPaymentTenant(p: any): string {
@@ -141,7 +122,7 @@ export default async function DashboardPage() {
                   <p className="text-sm font-medium text-text-primary font-tabular">
                     {formatCurrency(payment.amount)}
                   </p>
-                  <StatusBadgeInline status={payment.status} />
+                  <StatusBadge status={payment.status} size="sm" />
                 </div>
               </div>
             ))}
@@ -169,7 +150,7 @@ export default async function DashboardPage() {
                   <p className="text-sm font-medium text-text-primary font-tabular">
                     {formatCurrency(invoice.amount_due || invoice.amount)}
                   </p>
-                  <StatusBadgeInline status={invoice.status} />
+                  <StatusBadge status={invoice.status} size="sm" />
                 </div>
               </div>
             ))}
@@ -193,7 +174,7 @@ export default async function DashboardPage() {
                   <p className="text-sm font-medium text-text-primary truncate">{getMaintenanceIssue(req)}</p>
                   <p className="text-xs text-text-3">{getMaintenanceUnit(req)}</p>
                 </div>
-                <StatusBadgeInline status={req.status} />
+                <StatusBadge status={req.status} size="sm" />
               </div>
             ))}
           </div>

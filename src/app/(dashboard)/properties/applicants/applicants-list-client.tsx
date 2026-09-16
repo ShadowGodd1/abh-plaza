@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Search } from "lucide-react";
 import Button from "@/components/ui/button";
 import StatusBadge from "@/components/ui/status-badge";
+import Drawer from "@/components/ui/drawer";
 import EmptyState from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
 
@@ -35,6 +36,7 @@ function getStatusCounts(applicants: any[]) {
 export default function ApplicantsListClient({ initialApplicants }: { initialApplicants: any[] }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selected, setSelected] = useState<any | null>(null);
 
   const counts = getStatusCounts(initialApplicants);
 
@@ -93,7 +95,11 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((applicant) => (
-                <tr key={applicant.id} className="hover:bg-surface-2/30 transition-colors">
+                <tr
+                  key={applicant.id}
+                  className="hover:bg-surface-2/30 transition-colors cursor-pointer"
+                  onClick={() => setSelected(applicant)}
+                >
                   <td className="px-4 py-3 text-sm font-medium text-text-primary">{getName(applicant)}</td>
                   <td className="px-4 py-3 text-sm text-text-2">{getPhone(applicant)}</td>
                   <td className="px-4 py-3 text-sm text-text-2">{getUnit(applicant)}</td>
@@ -111,6 +117,52 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
           />
         )}
       </div>
+
+      <Drawer
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title="Applicant Details"
+        size="md"
+      >
+        {selected && (
+          <div className="space-y-6">
+            <div>
+              <StatusBadge status={selected.status} />
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Name</p>
+                <p className="text-sm font-medium text-text-primary">{getName(selected)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Phone</p>
+                <p className="text-sm text-text-primary">{getPhone(selected)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Interested Unit</p>
+                <p className="text-sm text-text-primary">{getUnit(selected)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Date</p>
+                <p className="text-sm text-text-primary">{formatDate(selected.date ?? selected.created_at)}</p>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-4">
+              <p className="text-xs text-text-3 uppercase tracking-wider mb-3">Actions</p>
+              <div className="flex gap-2">
+                {selected.status !== "approved" && selected.status !== "rejected" && selected.status !== "converted" && (
+                  <>
+                    <Button size="sm" className="flex-1">Approve</Button>
+                    <Button size="sm" variant="secondary" className="flex-1">Reject</Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </Drawer>
     </>
   );
 }

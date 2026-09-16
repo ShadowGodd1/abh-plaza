@@ -1,16 +1,9 @@
+import Link from "next/link";
 import { getLedgerEntries } from "@/lib/data";
 import MoneyDisplay from "@/components/ui/money-display";
 import EmptyState from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
 import LedgerListClient from "./ledger-list-client";
-
-function StatusBadge({ type }: { type: string }) {
-  return (
-    <span className={`text-xs font-medium ${type === "income" ? "text-success" : "text-danger"}`}>
-      {type === "income" ? "Income" : "Expense"}
-    </span>
-  );
-}
 
 export default async function LedgerPage() {
   const entries = await getLedgerEntries();
@@ -26,6 +19,8 @@ export default async function LedgerPage() {
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 text-sm text-text-3 mb-1">
+          <Link href="/dashboard" className="hover:text-gold transition-colors">Dashboard</Link>
+          <span>/</span>
           <span className="text-text-primary">Ledger</span>
         </div>
         <h1 className="text-2xl font-semibold text-text-primary">Ledger</h1>

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
 import { LayoutGrid, List, Search } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
+import Drawer from "@/components/ui/drawer";
+import StatusBadge from "@/components/ui/status-badge";
+import MoneyDisplay from "@/components/ui/money-display";
 import { cn, formatCurrency, getStatusColor, getStatusLabel } from "@/lib/utils";
 
 interface Unit {
@@ -22,31 +24,11 @@ function formatFloor(floor: number): string {
   return `${floor}${suffix}`;
 }
 
-function StatusBadge({ status, size = "sm" }: { status: string; size?: "sm" | "md" }) {
-  const colors = getStatusColor(status);
-  const label = getStatusLabel(status);
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 font-medium rounded-[var(--radius-full)]",
-        colors.bg,
-        colors.text,
-        {
-          "px-2 py-0.5 text-xs": size === "sm",
-          "px-3 py-1 text-xs": size === "md",
-        }
-      )}
-    >
-      <span className={cn("w-1.5 h-1.5 rounded-full", colors.dot)} />
-      {label}
-    </span>
-  );
-}
-
 export default function UnitsListClient({ initialUnits }: { initialUnits: Unit[] }) {
   const [view, setView] = useState<"grid" | "table">("table");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selected, setSelected] = useState<Unit | null>(null);
 
   const filteredUnits = useMemo(() => {
     return initialUnits.filter((unit) => {
@@ -118,12 +100,15 @@ export default function UnitsListClient({ initialUnits }: { initialUnits: Unit[]
                   <th className="text-left px-4 py-3 text-xs font-medium text-text-3 uppercase tracking-wider">Status</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-text-3 uppercase tracking-wider">Tenant</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-text-3 uppercase tracking-wider">Rent</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-text-3 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {filteredUnits.map((unit) => (
-                  <tr key={unit.id} className="hover:bg-surface-2/30 transition-colors">
+                  <tr
+                    key={unit.id}
+                    className="hover:bg-surface-2/30 transition-colors cursor-pointer"
+                    onClick={() => setSelected(unit)}
+                  >
                     <td className="px-4 py-3">
                       <span className="text-sm font-medium text-text-primary">{unit.label}</span>
                     </td>
@@ -133,14 +118,6 @@ export default function UnitsListClient({ initialUnits }: { initialUnits: Unit[]
                     <td className="px-4 py-3 text-sm text-text-2">{unit.tenant || "\u2014"}</td>
                     <td className="px-4 py-3 text-sm text-text-primary text-right font-tabular">
                       {unit.rent > 0 ? formatCurrency(unit.rent) : "\u2014"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/properties/units?id=${unit.id}`}
-                        className="text-sm text-gold hover:text-gold-dark transition-colors"
-                      >
-                        View
-                      </Link>
                     </td>
                   </tr>
                 ))}
@@ -160,10 +137,10 @@ export default function UnitsListClient({ initialUnits }: { initialUnits: Unit[]
       {view === "grid" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredUnits.map((unit) => (
-            <Link
+            <div
               key={unit.id}
-              href={`/properties/units?id=${unit.id}`}
-              className="bg-surface rounded-[var(--radius-lg)] border border-border p-4 hover:shadow-[var(--shadow-card)] transition-shadow"
+              onClick={() => setSelected(unit)}
+              className="bg-surface rounded-[var(--radius-lg)] border border-border p-4 hover:shadow-[var(--shadow-card)] transition-shadow cursor-pointer"
             >
               <div className="flex items-start justify-between mb-3">
                 <span className="text-lg font-semibold text-text-primary">{unit.label}</span>
@@ -181,7 +158,7 @@ export default function UnitsListClient({ initialUnits }: { initialUnits: Unit[]
                   </p>
                 )}
               </div>
-            </Link>
+            </div>
           ))}
           {filteredUnits.length === 0 && (
             <div className="col-span-full">
@@ -194,6 +171,52 @@ export default function UnitsListClient({ initialUnits }: { initialUnits: Unit[]
           )}
         </div>
       )}
+
+      <Drawer
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title={`Unit ${selected?.label || ""}`}
+        size="md"
+      >
+        {selected && (
+          <div className="space-y-6">
+            <div>
+              <StatusBadge status={selected.status} />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Type</span>
+                <span className="text-text-primary font-medium">{selected.type}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Floor</span>
+                <span className="text-text-primary font-medium">{formatFloor(selected.floor)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Monthly Rent</span>
+                <MoneyDisplay amount={selected.rent} size="lg" />
+              </div>
+            </div>
+
+            {selected.tenant && (
+              <div className="border-t border-border pt-4 space-y-3">
+                <p className="text-xs text-text-3 uppercase tracking-wider">Current Occupant</p>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-3">Name</span>
+                  <span className="text-text-primary font-medium">{selected.tenant}</span>
+                </div>
+              </div>
+            )}
+
+            {!selected.tenant && (
+              <div className="border-t border-border pt-4">
+                <p className="text-sm text-text-3">No current occupant</p>
+              </div>
+            )}
+          </div>
+        )}
+      </Drawer>
     </>
   );
 }

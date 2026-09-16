@@ -1,10 +1,22 @@
 import Link from "next/link";
-import { getOccupancies } from "@/lib/data";
+import { getOccupancies, getUnits } from "@/lib/data";
 import { formatDate } from "@/lib/utils";
 import OccupanciesListClient from "./occupancies-list-client";
 
 export default async function OccupanciesPage() {
-  const occupancies = await getOccupancies();
+  const [occupancies, units] = await Promise.all([getOccupancies(), getUnits()]);
+
+  const unitMap = new Map<string, string>();
+  (units as any[]).forEach((u: any) => {
+    const id = u.id;
+    const label = u.label || u.units?.label || "";
+    if (id && label) unitMap.set(id, label);
+  });
+
+  const mapped = (occupancies as any[]).map((occ: any) => ({
+    ...occ,
+    unit: occ.unit || unitMap.get(occ.unitId || occ.unit_id) || "—",
+  }));
 
   return (
     <div className="space-y-6">
@@ -22,7 +34,7 @@ export default async function OccupanciesPage() {
         </div>
       </div>
 
-      <OccupanciesListClient initialOccupancies={occupancies} />
+      <OccupanciesListClient initialOccupancies={mapped} />
     </div>
   );
 }

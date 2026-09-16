@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import MoneyDisplay from "@/components/ui/money-display";
+import Drawer from "@/components/ui/drawer";
 import EmptyState from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/utils";
 
@@ -16,6 +17,7 @@ function StatusBadge({ type }: { type: string }) {
 export default function LedgerListClient({ initialEntries }: { initialEntries: any[] }) {
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [selected, setSelected] = useState<any | null>(null);
 
   const filtered = useMemo(() => {
     return initialEntries.filter((entry: any) => {
@@ -68,7 +70,11 @@ export default function LedgerListClient({ initialEntries }: { initialEntries: a
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((entry: any) => (
-                <tr key={entry.id} className="hover:bg-surface-2/30 transition-colors">
+                <tr
+                  key={entry.id}
+                  className="hover:bg-surface-2/30 transition-colors cursor-pointer"
+                  onClick={() => setSelected(entry)}
+                >
                   <td className="px-4 py-3 text-sm text-text-2">{formatDate(entry.date || entry.occurred_at)}</td>
                   <td className="px-4 py-3">
                     <StatusBadge type={entry.type} />
@@ -101,6 +107,47 @@ export default function LedgerListClient({ initialEntries }: { initialEntries: a
           />
         )}
       </div>
+
+      <Drawer
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title="Ledger Entry"
+        size="md"
+      >
+        {selected && (
+          <div className="space-y-6">
+            <div>
+              <StatusBadge type={selected.type} />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Date</span>
+                <span className="text-text-primary font-medium">{formatDate(selected.date || selected.occurred_at)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Category</span>
+                <span className="text-text-primary font-medium capitalize">{selected.category.replace("_", " ")}</span>
+              </div>
+              <div>
+                <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Description</p>
+                <p className="text-sm text-text-primary">{selected.description}</p>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-4">
+              <div className="flex justify-between text-sm font-medium">
+                <span className="text-text-primary">Amount</span>
+                <MoneyDisplay
+                  amount={selected.amount}
+                  size="lg"
+                  className={selected.type === "income" ? "text-success" : "text-danger"}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </Drawer>
     </>
   );
 }

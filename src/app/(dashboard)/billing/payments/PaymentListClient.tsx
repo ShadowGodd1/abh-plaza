@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import StatusBadge from "@/components/ui/status-badge";
+import Drawer from "@/components/ui/drawer";
+import MoneyDisplay from "@/components/ui/money-display";
 import EmptyState from "@/components/ui/empty-state";
 import { formatDate, formatCurrency } from "@/lib/utils";
 
@@ -56,6 +58,7 @@ function getDate(p: Payment): string {
 
 export default function PaymentListClient({ initialPayments }: { initialPayments: Payment[] }) {
   const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Payment | null>(null);
 
   const filteredPayments = useMemo(() => {
     if (!search.trim()) return initialPayments;
@@ -100,7 +103,11 @@ export default function PaymentListClient({ initialPayments }: { initialPayments
             </thead>
             <tbody className="divide-y divide-border">
               {filteredPayments.map((payment) => (
-                <tr key={payment.id} className="hover:bg-surface-2/30 transition-colors">
+                <tr
+                  key={payment.id}
+                  className="hover:bg-surface-2/30 transition-colors cursor-pointer"
+                  onClick={() => setSelected(payment)}
+                >
                   <td className="px-4 py-3 text-sm text-text-2">{formatDate(getDate(payment))}</td>
                   <td className="px-4 py-3 text-sm font-medium text-text-primary font-tabular">{getInvoiceNumber(payment)}</td>
                   <td className="px-4 py-3 text-sm text-text-2">{getTenant(payment)}</td>
@@ -121,6 +128,55 @@ export default function PaymentListClient({ initialPayments }: { initialPayments
           />
         )}
       </div>
+
+      <Drawer
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title="Payment Details"
+        size="md"
+      >
+        {selected && (
+          <div className="space-y-6">
+            <div>
+              <StatusBadge status={selected.status} />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Amount</span>
+                <MoneyDisplay amount={selected.amount} size="lg" />
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Invoice</span>
+                <span className="text-text-primary font-medium font-tabular">{getInvoiceNumber(selected)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Tenant</span>
+                <span className="text-text-primary font-medium">{getTenant(selected)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Unit</span>
+                <span className="text-text-primary font-medium">{getUnit(selected)}</span>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-4 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Method</span>
+                <span className="text-text-primary font-medium">{methodLabels[selected.method] ?? selected.method}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Receipt</span>
+                <span className="text-text-primary font-medium font-tabular">{getReceipt(selected)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Date</span>
+                <span className="text-text-primary font-medium">{formatDate(getDate(selected))}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </Drawer>
     </>
   );
 }
