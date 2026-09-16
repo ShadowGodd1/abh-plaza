@@ -9,6 +9,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import MoneyDisplay from "@/components/ui/money-display";
+import ReportsClient from "./reports-client";
 
 const reports = [
   {
@@ -55,7 +56,18 @@ const reports = [
   },
 ];
 
-export default function ReportsPage() {
+export default async function ReportsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { view } = await searchParams;
+  const viewParam = typeof view === "string" ? view : null;
+
+  if (viewParam) {
+    return <ReportsClient view={viewParam} />;
+  }
+
   return (
     <div className="space-y-6">
       <div>

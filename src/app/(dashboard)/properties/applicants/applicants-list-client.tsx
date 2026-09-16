@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, CheckCircle, XCircle } from "lucide-react";
 import Button from "@/components/ui/button";
 import StatusBadge from "@/components/ui/status-badge";
 import Drawer from "@/components/ui/drawer";
 import EmptyState from "@/components/ui/empty-state";
+import Modal from "@/components/ui/modal";
 import { formatDate } from "@/lib/utils";
 
 function getName(a: any): string {
@@ -37,6 +38,10 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selected, setSelected] = useState<any | null>(null);
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [rejectLoading, setRejectLoading] = useState(false);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
 
   const counts = getStatusCounts(initialApplicants);
 
@@ -47,6 +52,28 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
     const matchesStatus = statusFilter === "all" || a.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const handleApprove = async () => {
+    setApproveLoading(true);
+    setShowApproveConfirm(false);
+    try {
+      await new Promise((r) => setTimeout(r, 800));
+    } finally {
+      setApproveLoading(false);
+      setSelected(null);
+    }
+  };
+
+  const handleReject = async () => {
+    setRejectLoading(true);
+    setShowRejectConfirm(false);
+    try {
+      await new Promise((r) => setTimeout(r, 800));
+    } finally {
+      setRejectLoading(false);
+      setSelected(null);
+    }
+  };
 
   return (
     <>
@@ -154,8 +181,23 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
               <div className="flex gap-2">
                 {selected.status !== "approved" && selected.status !== "rejected" && selected.status !== "converted" && (
                   <>
-                    <Button size="sm" className="flex-1">Approve</Button>
-                    <Button size="sm" variant="secondary" className="flex-1">Reject</Button>
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      loading={approveLoading}
+                      onClick={() => setShowApproveConfirm(true)}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="flex-1"
+                      loading={rejectLoading}
+                      onClick={() => setShowRejectConfirm(true)}
+                    >
+                      Reject
+                    </Button>
                   </>
                 )}
               </div>
@@ -163,6 +205,72 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
           </div>
         )}
       </Drawer>
+
+      {/* Approve Confirmation */}
+      <Modal
+        open={showApproveConfirm}
+        onClose={() => setShowApproveConfirm(false)}
+        title="Approve Applicant"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-success-bg flex items-center justify-center flex-shrink-0">
+              <CheckCircle size={20} className="text-success" />
+            </div>
+            <div>
+              <p className="text-sm text-text-primary">
+                You are about to approve{" "}
+                <span className="font-medium">{selected && getName(selected)}</span>.
+              </p>
+              <p className="text-sm text-text-3 mt-1">
+                This will move the applicant to the approved stage and they can proceed with the rental agreement.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="secondary" onClick={() => setShowApproveConfirm(false)}>
+              Cancel
+            </Button>
+            <Button loading={approveLoading} onClick={handleApprove}>
+              Approve
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Reject Confirmation */}
+      <Modal
+        open={showRejectConfirm}
+        onClose={() => setShowRejectConfirm(false)}
+        title="Reject Applicant"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-danger-bg flex items-center justify-center flex-shrink-0">
+              <XCircle size={20} className="text-danger" />
+            </div>
+            <div>
+              <p className="text-sm text-text-primary">
+                You are about to reject{" "}
+                <span className="font-medium">{selected && getName(selected)}</span>.
+              </p>
+              <p className="text-sm text-text-3 mt-1">
+                This action can be reversed later if needed.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="secondary" onClick={() => setShowRejectConfirm(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" loading={rejectLoading} onClick={handleReject}>
+              Reject
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

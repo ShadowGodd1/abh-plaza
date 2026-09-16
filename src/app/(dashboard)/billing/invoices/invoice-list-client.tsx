@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, AlertTriangle } from "lucide-react";
 import Drawer from "@/components/ui/drawer";
 import Button from "@/components/ui/button";
 import StatusBadge from "@/components/ui/status-badge";
 import MoneyDisplay from "@/components/ui/money-display";
 import EmptyState from "@/components/ui/empty-state";
+import Modal from "@/components/ui/modal";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { DEMO_PAYMENTS } from "@/lib/demo-data";
 
 interface Invoice {
   id: string;
@@ -63,7 +65,8 @@ export default function InvoiceListClient({ initialInvoices }: { initialInvoices
       </div>
 
       <div className="bg-surface rounded-[var(--radius-lg)] border border-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-surface-2/50">
@@ -78,12 +81,21 @@ export default function InvoiceListClient({ initialInvoices }: { initialInvoices
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((inv) => (
-                <tr key={inv.id} className="hover:bg-surface-2/30 transition-colors">
+                <tr
+                  key={inv.id}
+                  className={`transition-colors ${
+                    inv.status === "overdue"
+                      ? "bg-danger/[0.03] hover:bg-danger/[0.06]"
+                      : "hover:bg-surface-2/30"
+                  }`}
+                >
                   <td className="px-4 py-3 text-sm font-medium text-text-primary font-tabular">{inv.number}</td>
                   <td className="px-4 py-3 text-sm text-text-2">{inv.unit}</td>
                   <td className="px-4 py-3 text-sm text-text-2">{inv.tenant}</td>
                   <td className="px-4 py-3 text-sm text-text-primary text-right font-tabular">{formatCurrency(inv.amount)}</td>
-                  <td className="px-4 py-3 text-sm text-text-2">{formatDate(inv.dueDate)}</td>
+                  <td className={`px-4 py-3 text-sm ${inv.status === "overdue" ? "text-danger font-medium" : "text-text-2"}`}>
+                    {formatDate(inv.dueDate)}
+                  </td>
                   <td className="px-4 py-3"><StatusBadge status={inv.status} size="sm" /></td>
                   <td className="px-4 py-3 text-right">
                     <button
@@ -98,6 +110,31 @@ export default function InvoiceListClient({ initialInvoices }: { initialInvoices
             </tbody>
           </table>
         </div>
+
+        {/* Mobile cards */}
+        <div className="sm:hidden divide-y divide-border">
+          {filtered.map((inv) => (
+            <button
+              key={inv.id}
+              onClick={() => setSelectedInvoice(inv)}
+              className={`w-full text-left p-4 space-y-1.5 transition-colors ${
+                inv.status === "overdue"
+                  ? "bg-danger/[0.03] hover:bg-danger/[0.06]"
+                  : "hover:bg-surface-2/30"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-text-primary font-tabular">{inv.number}</span>
+                <StatusBadge status={inv.status} size="sm" />
+              </div>
+              <p className="text-sm text-text-2">{inv.unit} · {inv.tenant}</p>
+              <p className="text-sm text-text-2">
+                {formatCurrency(inv.amount)} · Due {formatDate(inv.dueDate)}
+              </p>
+            </button>
+          ))}
+        </div>
+
         {filtered.length === 0 && (
           <EmptyState
             title="No invoices found"
@@ -120,6 +157,56 @@ function InvoiceDetailDrawer({
   invoice: Invoice | null;
   onClose: () => void;
 }) {
+  const [recordPaymentLoading, setRecordPaymentLoading] = useState(false);
+  const [voidLoading, setVoidLoading] = useState(false);
+  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+  const [showVoidConfirm, setShowVoidConfirm] = useState(false);
+
+  const payments = invoice
+    ? DEMO_PAYMENTS.filter((p) => p.invoiceNumber === invoice.number)
+    : [];
+
+  const auditEntries = invoice
+    ? [
+        { action: "Invoice created by Admin", timestamp: "Sep 1, 2026 · 8:00 AM", color: "bg-text-3" },
+        ...(invoice.amountPaid > 0
+          ? [{ action: `Payment recorded — ${formatCurrency(invoice.amountPaid)}`, timestamp: "Sep 14, 2026 · 2:15 PM", color: "bg-gold" }]
+          : []),
+        ...(invoice.status === "paid"
+          ? [{ action: "Status changed to Paid", timestamp: "Sep 14, 2026 · 2:16 PM", color: "bg-green" }]
+          : invoice.status === "partial"
+            ? [{ action: "Status changed to Partial", timestamp: "Sep 14, 2026 · 2:16 PM", color: "bg-gold" }]
+            : invoice.status === "overdue"
+              ? [{ action: "Status changed to Overdue", timestamp: "Sep 11, 2026 · 12:00 AM", color: "bg-red" }]
+              : []),
+      ]
+    : [];
+
+  const handleRecordPayment = async () => {
+    setRecordPaymentLoading(true);
+    setShowPaymentConfirm(false);
+    try {
+      await new Promise((r) => setTimeout(r, 800));
+    } finally {
+      setRecordPaymentLoading(false);
+    }
+  };
+
+  const handleVoidInvoice = async () => {
+    setVoidLoading(true);
+    setShowVoidConfirm(false);
+    try {
+      await new Promise((r) => setTimeout(r, 800));
+    } finally {
+      setVoidLoading(false);
+    }
+  };
+
+  const outstanding = invoice ? invoice.amount - invoice.amountPaid : 0;
+  const isOverpaid = invoice ? invoice.amountPaid > invoice.amount : false;
+  const isPartial = invoice ? invoice.amountPaid > 0 && invoice.amountPaid < invoice.amount : false;
+  const creditAmount = isOverpaid && invoice ? invoice.amountPaid - invoice.amount : 0;
+
   return (
     <Drawer
       open={!!invoice}
@@ -141,7 +228,9 @@ function InvoiceDetailDrawer({
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-text-3">Due Date</span>
-              <span className="text-text-primary font-medium">{formatDate(invoice.dueDate)}</span>
+              <span className={`font-medium ${invoice.status === "overdue" ? "text-danger" : "text-text-primary"}`}>
+                {formatDate(invoice.dueDate)}
+              </span>
             </div>
           </div>
 
@@ -156,33 +245,167 @@ function InvoiceDetailDrawer({
             </div>
             <div className="flex justify-between text-sm font-medium">
               <span className="text-text-primary">Outstanding</span>
-              <MoneyDisplay amount={invoice.amount - invoice.amountPaid} />
+              {isOverpaid ? (
+                <span className="text-success font-medium">KES 0</span>
+              ) : (
+                <MoneyDisplay amount={outstanding} />
+              )}
             </div>
           </div>
 
+          {isOverpaid && (
+            <div className="bg-success-bg border border-success/20 rounded-[var(--radius-md)] px-4 py-3">
+              <p className="text-sm font-medium text-success">
+                KES {creditAmount.toLocaleString("en-KE")} credit
+              </p>
+              <p className="text-xs text-success/80 mt-0.5">
+                Overpayment of {formatCurrency(creditAmount)} will be applied to future invoices.
+              </p>
+            </div>
+          )}
+
+          {isPartial && (
+            <div className="bg-warning-bg border border-warning/20 rounded-[var(--radius-md)] px-4 py-3">
+              <p className="text-sm font-medium text-warning">
+                Remaining Balance: {formatCurrency(outstanding)}
+              </p>
+              <p className="text-xs text-warning/80 mt-0.5">
+                {formatCurrency(invoice.amountPaid)} of {formatCurrency(invoice.amount)} paid.
+              </p>
+            </div>
+          )}
+
           {invoice.status !== "paid" && invoice.status !== "void" && (
             <div className="border-t border-border pt-4">
-              <Button className="w-full">
+              <Button
+                className="w-full"
+                loading={recordPaymentLoading}
+                onClick={() => setShowPaymentConfirm(true)}
+              >
                 Record Payment
               </Button>
             </div>
           )}
 
+          {invoice.status !== "void" && invoice.status !== "paid" && (
+            <div>
+              <Button
+                variant="danger"
+                className="w-full"
+                loading={voidLoading}
+                onClick={() => setShowVoidConfirm(true)}
+              >
+                Void Invoice
+              </Button>
+            </div>
+          )}
+
+          {/* Payment History */}
           <div className="border-t border-border pt-4">
             <h4 className="text-sm font-medium text-text-primary mb-3">Payment History</h4>
-            {invoice.amountPaid > 0 ? (
+            {payments.length > 0 ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-2">Partial payment</span>
-                  <MoneyDisplay amount={invoice.amountPaid} />
-                </div>
+                {payments.map((p) => (
+                  <div key={p.id} className="bg-surface-2/50 rounded-[var(--radius-md)] p-3 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-text-primary font-tabular">{formatCurrency(p.amount)}</span>
+                      <span className="text-xs text-text-3">{formatDate(p.date)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-text-3">
+                      <span className="capitalize">{p.method.replace("_", " ")}</span>
+                      {p.receipt && <span className="font-tabular">Ref: {p.receipt}</span>}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <p className="text-sm text-text-3">No payments recorded.</p>
             )}
           </div>
+
+          {/* Audit History */}
+          <div className="border-t border-border pt-4">
+            <h4 className="text-sm font-medium text-text-primary mb-3">Audit History</h4>
+            <div className="space-y-3">
+              {auditEntries.map((entry, i) => (
+                <div key={i} className="flex items-start gap-3">
+                  <div className={`w-2 h-2 rounded-full ${entry.color} mt-1.5 shrink-0`} />
+                  <div>
+                    <p className="text-sm text-text-primary">{entry.action}</p>
+                    <p className="text-xs text-text-3 mt-0.5">{entry.timestamp}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Record Payment Confirmation */}
+      <Modal
+        open={showPaymentConfirm}
+        onClose={() => setShowPaymentConfirm(false)}
+        title="Record Payment"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle size={20} className="text-gold" />
+            </div>
+            <div>
+              <p className="text-sm text-text-primary">
+                You are about to record a payment for Invoice{" "}
+                <span className="font-medium">{invoice?.number}</span>.
+              </p>
+              <p className="text-sm text-text-3 mt-1">
+                Amount due: <span className="font-medium text-text-primary">{invoice && formatCurrency(invoice.amount - invoice.amountPaid)}</span>
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="secondary" onClick={() => setShowPaymentConfirm(false)}>
+              Cancel
+            </Button>
+            <Button loading={recordPaymentLoading} onClick={handleRecordPayment}>
+              Confirm
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Void Invoice Confirmation */}
+      <Modal
+        open={showVoidConfirm}
+        onClose={() => setShowVoidConfirm(false)}
+        title="Void Invoice"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-danger/10 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle size={20} className="text-danger" />
+            </div>
+            <div>
+              <p className="text-sm text-text-primary">
+                You are about to void Invoice{" "}
+                <span className="font-medium">{invoice?.number}</span>.
+              </p>
+              <p className="text-sm text-amber-700 mt-1">
+                This action cannot be undone. The invoice will be marked as void and no further payments can be recorded against it.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="secondary" onClick={() => setShowVoidConfirm(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" loading={voidLoading} onClick={handleVoidInvoice}>
+              Void Invoice
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </Drawer>
   );
 }

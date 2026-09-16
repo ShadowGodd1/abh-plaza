@@ -141,10 +141,19 @@ export default async function DashboardPage() {
           </div>
           <div className="divide-y divide-border">
             {metrics.outstandingInvoices.map((invoice: any) => (
-              <div key={invoice.id} className="px-4 py-3 flex items-center justify-between">
+              <div
+                key={invoice.id}
+                className={`px-4 py-3 flex items-center justify-between ${
+                  invoice.status === "overdue"
+                    ? "bg-danger/[0.03]"
+                    : ""
+                }`}
+              >
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-text-primary truncate">{getInvoiceUnit(invoice)} · {getInvoiceTenant(invoice)}</p>
-                  <p className="text-xs text-text-3">Due {formatDate(invoice.due_date || invoice.dueDate)}</p>
+                  <p className={`text-xs ${invoice.status === "overdue" ? "text-danger font-medium" : "text-text-3"}`}>
+                    Due {formatDate(invoice.due_date || invoice.dueDate)}
+                  </p>
                 </div>
                 <div className="text-right flex-shrink-0 ml-4">
                   <p className="text-sm font-medium text-text-primary font-tabular">

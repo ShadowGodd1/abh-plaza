@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Phone } from "lucide-react";
+import { Phone, AlertTriangle } from "lucide-react";
 import Button from "@/components/ui/button";
 import Drawer from "@/components/ui/drawer";
 import MoneyDisplay from "@/components/ui/money-display";
+import Modal from "@/components/ui/modal";
 import { formatDate } from "@/lib/utils";
 
 type StaffMember = {
@@ -26,6 +27,18 @@ interface StaffListClientProps {
 
 export default function StaffListClient({ initialStaff }: StaffListClientProps) {
   const [selected, setSelected] = useState<StaffMember | null>(null);
+  const [payrollLoading, setPayrollLoading] = useState(false);
+  const [showPayrollConfirm, setShowPayrollConfirm] = useState(false);
+
+  const handleRecordPayroll = async () => {
+    setPayrollLoading(true);
+    setShowPayrollConfirm(false);
+    try {
+      await new Promise((r) => setTimeout(r, 800));
+    } finally {
+      setPayrollLoading(false);
+    }
+  };
 
   return (
     <>
@@ -108,11 +121,54 @@ export default function StaffListClient({ initialStaff }: StaffListClientProps) 
             </div>
 
             <div className="border-t border-border pt-4">
-              <Button className="w-full">Record Payroll Payment</Button>
+              <Button
+                className="w-full"
+                loading={payrollLoading}
+                onClick={() => setShowPayrollConfirm(true)}
+              >
+                Record Payroll Payment
+              </Button>
             </div>
           </div>
         )}
       </Drawer>
+
+      <Modal
+        open={showPayrollConfirm}
+        onClose={() => setShowPayrollConfirm(false)}
+        title="Record Payroll Payment"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle size={20} className="text-gold" />
+            </div>
+            <div>
+              <p className="text-sm text-text-primary">
+                You are about to record a payroll payment for{" "}
+                <span className="font-medium">{selected?.name}</span>.
+              </p>
+              {selected?.amount && (
+                <p className="text-sm text-text-3 mt-1">
+                  Amount: <span className="font-medium text-text-primary">{selected.amountFormatted}</span>
+                </p>
+              )}
+              <p className="text-sm text-text-3 mt-1">
+                This will create a ledger entry and update the last payment date.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="secondary" onClick={() => setShowPayrollConfirm(false)}>
+              Cancel
+            </Button>
+            <Button loading={payrollLoading} onClick={handleRecordPayroll}>
+              Confirm
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

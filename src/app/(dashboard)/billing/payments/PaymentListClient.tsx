@@ -87,7 +87,8 @@ export default function PaymentListClient({ initialPayments }: { initialPayments
       </div>
 
       <div className="bg-surface rounded-[var(--radius-lg)] border border-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-surface-2/50">
@@ -121,6 +122,27 @@ export default function PaymentListClient({ initialPayments }: { initialPayments
             </tbody>
           </table>
         </div>
+
+        {/* Mobile cards */}
+        <div className="sm:hidden divide-y divide-border">
+          {filteredPayments.map((payment) => (
+            <button
+              key={payment.id}
+              onClick={() => setSelected(payment)}
+              className="w-full text-left p-4 space-y-1.5 hover:bg-surface-2/30 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-text-primary font-tabular">{getInvoiceNumber(payment)}</span>
+                <StatusBadge status={payment.status} size="sm" />
+              </div>
+              <p className="text-sm text-text-2">{getTenant(payment)} · {getUnit(payment)}</p>
+              <p className="text-sm text-text-2">
+                {formatCurrency(payment.amount)} · {methodLabels[payment.method] ?? payment.method}
+              </p>
+            </button>
+          ))}
+        </div>
+
         {filteredPayments.length === 0 && (
           <EmptyState
             title="No payments recorded"

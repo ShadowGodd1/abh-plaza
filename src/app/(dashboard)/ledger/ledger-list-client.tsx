@@ -56,7 +56,8 @@ export default function LedgerListClient({ initialEntries }: { initialEntries: a
       </div>
 
       <div className="bg-surface rounded-[var(--radius-lg)] border border-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-surface-2/50">
@@ -100,6 +101,32 @@ export default function LedgerListClient({ initialEntries }: { initialEntries: a
             </tbody>
           </table>
         </div>
+
+        {/* Mobile cards */}
+        <div className="sm:hidden divide-y divide-border">
+          {filtered.map((entry: any) => (
+            <button
+              key={entry.id}
+              onClick={() => setSelected(entry)}
+              className="w-full text-left p-4 space-y-1.5 hover:bg-surface-2/30 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <StatusBadge type={entry.type} />
+                <span className="text-xs text-text-3">{formatDate(entry.date || entry.occurred_at)}</span>
+              </div>
+              <p className="text-sm font-medium text-text-primary">{entry.description}</p>
+              <p className="text-sm text-text-2 capitalize">{entry.category.replace("_", " ")}</p>
+              <p className="text-sm font-tabular">
+                {entry.type === "income" ? (
+                  <MoneyDisplay amount={entry.amount} className="text-success" />
+                ) : (
+                  <MoneyDisplay amount={entry.amount} className="text-danger" />
+                )}
+              </p>
+            </button>
+          ))}
+        </div>
+
         {filtered.length === 0 && (
           <EmptyState
             title="No ledger entries"

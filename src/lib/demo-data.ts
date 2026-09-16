@@ -110,28 +110,31 @@ export const DEMO_MESSAGES = [
   {
     id: "t-1", person: "Ahmed Noor", unit: "A-04", lastMessage: "Thank you for the update on the maintenance request.", time: "2026-09-14T10:30:00", unread: 0,
     messages: [
-      { id: "m1", sender: "admin", body: "Hello Ahmed, your maintenance request for the leaking faucet has been logged. Our team will review it shortly.", time: "2026-09-14T09:00:00" },
-      { id: "m2", sender: "tenant", body: "Thank you for the update on the maintenance request.", time: "2026-09-14T10:30:00" },
+      { id: "m1", sender: "admin", body: "Hello Ahmed, your maintenance request for the leaking faucet has been logged. Our team will review it shortly.", time: "2026-09-14T09:00:00", isInternal: false },
+      { id: "m2", sender: "admin", body: "Note: Plumber Peter Kamau is available next Tuesday. Schedule for that day.", time: "2026-09-14T09:05:00", isInternal: true },
+      { id: "m3", sender: "tenant", body: "Thank you for the update on the maintenance request.", time: "2026-09-14T10:30:00", isInternal: false },
     ],
   },
   {
     id: "t-2", person: "Sara Ali", unit: "A-02", lastMessage: "When is the next service charge payment due?", time: "2026-09-13T15:45:00", unread: 1,
     messages: [
-      { id: "m1", sender: "tenant", body: "When is the next service charge payment due?", time: "2026-09-13T15:45:00" },
+      { id: "m1", sender: "tenant", body: "When is the next service charge payment due?", time: "2026-09-13T15:45:00", isInternal: false },
+      { id: "m2", sender: "admin", body: "Internal: Check her payment history before responding. She has been late 2 months in a row.", time: "2026-09-13T16:00:00", isInternal: true },
     ],
   },
   {
     id: "t-3", person: "Omar Hassan", unit: "B-01", lastMessage: "Payment confirmed. Thank you.", time: "2026-09-12T11:20:00", unread: 0,
     messages: [
-      { id: "m1", sender: "admin", body: "Your September invoice has been generated. Please find the details in your portal.", time: "2026-09-10T08:00:00" },
-      { id: "m2", sender: "tenant", body: "Payment confirmed. Thank you.", time: "2026-09-12T11:20:00" },
+      { id: "m1", sender: "admin", body: "Your September invoice has been generated. Please find the details in your portal.", time: "2026-09-10T08:00:00", isInternal: false },
+      { id: "m2", sender: "admin", body: "Note: Omar requested early invoice this month due to travel plans.", time: "2026-09-10T08:05:00", isInternal: true },
+      { id: "m3", sender: "tenant", body: "Payment confirmed. Thank you.", time: "2026-09-12T11:20:00", isInternal: false },
     ],
   },
   {
     id: "t-4", person: "Amina Osman", unit: "B-03", lastMessage: "Is there a discount for early payment?", time: "2026-09-11T09:15:00", unread: 0,
     messages: [
-      { id: "m1", sender: "tenant", body: "Is there a discount for early payment?", time: "2026-09-11T09:15:00" },
-      { id: "m2", sender: "admin", body: "Thank you for asking, Amina. Currently there is no early payment discount. The full amount is due by the 20th.", time: "2026-09-11T10:00:00" },
+      { id: "m1", sender: "tenant", body: "Is there a discount for early payment?", time: "2026-09-11T09:15:00", isInternal: false },
+      { id: "m2", sender: "admin", body: "Thank you for asking, Amina. Currently there is no early payment discount. The full amount is due by the 20th.", time: "2026-09-11T10:00:00", isInternal: false },
     ],
   },
 ];

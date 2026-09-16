@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Send } from "lucide-react";
+import { Search, Send, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Message = {
@@ -9,6 +9,7 @@ type Message = {
   sender: string;
   body: string;
   time: string;
+  isInternal?: boolean;
 };
 
 type MessageThread = {
@@ -93,25 +94,42 @@ export default function MessagesListClient({ initialMessages }: MessagesListClie
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {selectedThread.messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={cn(
-                    "max-w-[80%] rounded-[var(--radius-lg)] px-4 py-2.5",
-                    msg.sender === "admin"
-                      ? "bg-ink text-white ml-auto rounded-br-sm"
-                      : "bg-surface-2 text-text-primary rounded-bl-sm"
-                  )}
-                >
-                  <p className="text-sm">{msg.body}</p>
-                  <p className={cn(
-                    "text-[10px] mt-1",
-                    msg.sender === "admin" ? "text-white/50" : "text-text-3"
-                  )}>
-                    {msg.time}
-                  </p>
-                </div>
-              ))}
+              {selectedThread.messages.map((msg) => {
+                if (msg.isInternal) {
+                  return (
+                    <div
+                      key={msg.id}
+                      className="max-w-[85%] rounded-[var(--radius-lg)] px-4 py-2.5 ml-auto border border-dashed border-gold/40 bg-gold/5 relative"
+                    >
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Lock size={11} className="text-gold" />
+                        <span className="text-[10px] font-medium text-gold uppercase tracking-wide">Internal</span>
+                      </div>
+                      <p className="text-sm text-text-2">{msg.body}</p>
+                      <p className="text-[10px] mt-1 text-text-3">{msg.time}</p>
+                    </div>
+                  );
+                }
+                return (
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      "max-w-[80%] rounded-[var(--radius-lg)] px-4 py-2.5",
+                      msg.sender === "admin"
+                        ? "bg-ink text-white ml-auto rounded-br-sm"
+                        : "bg-surface-2 text-text-primary rounded-bl-sm"
+                    )}
+                  >
+                    <p className="text-sm">{msg.body}</p>
+                    <p className={cn(
+                      "text-[10px] mt-1",
+                      msg.sender === "admin" ? "text-white/50" : "text-text-3"
+                    )}>
+                      {msg.time}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
             <div className="p-3 border-t border-border">
               <div className="flex gap-2">

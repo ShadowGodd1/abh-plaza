@@ -17,7 +17,10 @@ export default async function MessagesPage() {
     timestamp: m.timestamp || m.sent_at || m.date || "",
     timestampFormatted: formatMessageTime(m.timestamp || m.sent_at || m.date),
     unread: m.unread || false,
-    messages: m.messages || [],
+    messages: (m.messages || []).map((msg: any) => ({
+      ...msg,
+      isInternal: msg.isInternal ?? false,
+    })),
   }));
 
   return (

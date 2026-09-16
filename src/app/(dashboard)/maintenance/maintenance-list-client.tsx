@@ -8,7 +8,7 @@ import StatusBadge from "@/components/ui/status-badge";
 import Drawer from "@/components/ui/drawer";
 import EmptyState from "@/components/ui/empty-state";
 import MoneyDisplay from "@/components/ui/money-display";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatCurrency, cn } from "@/lib/utils";
 
 function getStatusLabel(status: string) {
   if (status === "in_progress") return "In Progress";
@@ -71,8 +71,14 @@ export default function MaintenanceListClient({ initialRequests }: { initialRequ
         ))}
       </div>
 
+      {/* Status progression stepper */}
+      {statusFilter !== "all" && (
+        <StatusProgression activeStatus={statusFilter} />
+      )}
+
       <div className="bg-surface rounded-[var(--radius-lg)] border border-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-surface-2/50">
@@ -110,6 +116,28 @@ export default function MaintenanceListClient({ initialRequests }: { initialRequ
             </tbody>
           </table>
         </div>
+
+        {/* Mobile cards */}
+        <div className="sm:hidden divide-y divide-border">
+          {filtered.map((req) => (
+            <button
+              key={req.id}
+              onClick={() => setSelected(req)}
+              className="w-full text-left p-4 space-y-1.5 hover:bg-surface-2/30 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-text-primary truncate pr-2">{req.issue}</span>
+                <StatusBadge status={req.status} size="sm" />
+              </div>
+              <p className="text-sm text-text-2">{req.unit} · {req.raisedBy}</p>
+              <p className="text-sm text-text-2">
+                {formatDate(req.date)}
+                {req.cost ? ` · ${formatCurrency(req.cost)}` : ""}
+              </p>
+            </button>
+          ))}
+        </div>
+
         {filtered.length === 0 && (
           <EmptyState
             title="No maintenance requests"
@@ -161,6 +189,60 @@ export default function MaintenanceListClient({ initialRequests }: { initialRequ
           </div>
         )}
       </Drawer>
+    </div>
+  );
+}
+
+const PROGRESS_STEPS = [
+  { key: "open", label: "OPEN" },
+  { key: "in_progress", label: "IN PROGRESS" },
+  { key: "resolved", label: "RESOLVED" },
+];
+
+function StatusProgression({ activeStatus }: { activeStatus: string }) {
+  const activeIndex = PROGRESS_STEPS.findIndex((s) => s.key === activeStatus);
+
+  return (
+    <div className="bg-surface rounded-[var(--radius-lg)] border border-border p-4">
+      <div className="flex items-center justify-between">
+        {PROGRESS_STEPS.map((step, i) => {
+          const isCompleted = activeIndex > i;
+          const isActive = step.key === activeStatus;
+
+          return (
+            <div key={step.key} className="flex items-center flex-1 last:flex-none">
+              <div className="flex flex-col items-center gap-1.5">
+                <div
+                  className={cn(
+                    "w-4 h-4 rounded-full border-2 transition-colors shrink-0",
+                    isActive && "bg-gold border-gold",
+                    isCompleted && "bg-green border-green",
+                    !isActive && !isCompleted && "bg-surface-2 border-border"
+                  )}
+                />
+                <span
+                  className={cn(
+                    "text-[10px] font-medium whitespace-nowrap",
+                    isActive && "text-gold",
+                    isCompleted && "text-green",
+                    !isActive && !isCompleted && "text-text-3"
+                  )}
+                >
+                  {step.label}
+                </span>
+              </div>
+              {i < PROGRESS_STEPS.length - 1 && (
+                <div
+                  className={cn(
+                    "flex-1 h-0.5 mx-2 mt-[-18px] rounded-full",
+                    activeIndex > i ? "bg-green" : "bg-border"
+                  )}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
