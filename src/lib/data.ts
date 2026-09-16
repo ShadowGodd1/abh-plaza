@@ -137,12 +137,41 @@ export async function getMessageThreads() {
   const supabase = await createClient();
   const user = await getCurrentUser();
   if (!user) return demo.DEMO_MESSAGES;
-  const { data } = await supabase
+  const { data: messages } = await supabase
     .from("messages")
     .select("*")
     .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
     .order("sent_at", { ascending: false });
-  return data || demo.DEMO_MESSAGES;
+  if (!messages || messages.length === 0) return demo.DEMO_MESSAGES;
+  const senderIds = [...new Set(messages.map((m: any) => m.sender_id))];
+  const { data: people } = await supabase
+    .from("people")
+    .select("id, full_name")
+    .in("id", senderIds);
+  const nameMap = new Map<string, string>();
+  (people || []).forEach((p: any) => nameMap.set(p.id, p.full_name));
+  const threadMap = new Map<string, any>();
+  for (const msg of messages) {
+    const tid = msg.thread_id;
+    if (!threadMap.has(tid)) {
+      threadMap.set(tid, {
+        id: tid,
+        person: nameMap.get(msg.sender_id) || "Unknown",
+        unit: "",
+        lastMessage: msg.body,
+        timestamp: msg.sent_at,
+        unread: !msg.read_at && msg.recipient_id === user.id,
+        messages: [],
+      });
+    }
+    threadMap.get(tid)!.messages.push({
+      id: msg.id,
+      sender: msg.sender_id === user.id ? "admin" : "tenant",
+      body: msg.body,
+      time: msg.sent_at,
+    });
+  }
+  return Array.from(threadMap.values());
 }
 
 export async function getAnnouncements() {
