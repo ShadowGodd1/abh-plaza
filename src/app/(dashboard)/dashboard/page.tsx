@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import MetricCard from "@/components/ui/metric-card";
 import StatusBadge from "@/components/ui/status-badge";
+import LiveIndicator from "@/components/ui/live-indicator";
 import { getDashboardMetrics } from "@/lib/data";
 import QuickActions from "./quick-actions";
 import DashboardCharts from "./dashboard-charts";
@@ -61,48 +62,61 @@ export default async function DashboardPage() {
   const metrics = await getDashboardMetrics();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-text-primary">Dashboard</h1>
-        <p className="text-sm text-text-3 mt-1">
-          What is happening at ABH Plaza and what needs your attention.
-        </p>
+    <div className="space-y-6 density-compact">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-text-primary">Dashboard</h1>
+          <p className="text-sm text-text-3 mt-1">
+            What is happening at ABH Plaza and what needs your attention.
+          </p>
+        </div>
+        <LiveIndicator />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          label="Occupied Units"
-          value={`${metrics.occupiedUnits.percentage}%`}
-          subtitle={`${metrics.occupiedUnits.count} / ${metrics.occupiedUnits.total} units`}
-          icon={<Home size={20} />}
-          trend={{ value: 2, label: "from last month" }}
-        />
-        <MetricCard
-          label="Vacant Units"
-          value={metrics.vacantUnits.count.toString()}
-          subtitle={`${metrics.vacantUnits.percentage}% availability`}
-          icon={<Building2 size={20} />}
-          trend={{ value: -2, label: "from last month" }}
-        />
-        <MetricCard
-          label="Collection"
-          value={formatCurrency(metrics.collection.amount)}
-          subtitle={`${metrics.collection.rate}% collection rate`}
-          icon={<TrendingUp size={20} />}
-          trend={{ value: 5, label: "from last month" }}
-        />
-        <MetricCard
-          label="Overdue"
-          value={formatCurrency(metrics.overdue.amount)}
-          subtitle={`${metrics.overdue.invoices} invoices`}
-          icon={<AlertTriangle size={20} />}
-          trend={{ value: -12, label: "from last month" }}
-        />
+        <div className="animate-fade-in-up animate-delay-0">
+          <MetricCard
+            label="Occupied Units"
+            value={`${metrics.occupiedUnits.percentage}%`}
+            subtitle={`${metrics.occupiedUnits.count} / ${metrics.occupiedUnits.total} units`}
+            icon={<Home size={20} />}
+            trend={{ value: 2, label: "from last month" }}
+          />
+        </div>
+        <div className="animate-fade-in-up animate-delay-1">
+          <MetricCard
+            label="Vacant Units"
+            value={metrics.vacantUnits.count.toString()}
+            subtitle={`${metrics.vacantUnits.percentage}% availability`}
+            icon={<Building2 size={20} />}
+            trend={{ value: -2, label: "from last month" }}
+          />
+        </div>
+        <div className="animate-fade-in-up animate-delay-2">
+          <MetricCard
+            label="Collection"
+            value={formatCurrency(metrics.collection.amount)}
+            subtitle={`${metrics.collection.rate}% collection rate`}
+            icon={<TrendingUp size={20} />}
+            trend={{ value: 5, label: "from last month" }}
+          />
+        </div>
+        <div className="animate-fade-in-up animate-delay-3">
+          <MetricCard
+            label="Overdue"
+            value={formatCurrency(metrics.overdue.amount)}
+            subtitle={`${metrics.overdue.invoices} invoices`}
+            icon={<AlertTriangle size={20} />}
+            trend={{ value: -12, label: "from last month" }}
+          />
+        </div>
       </div>
 
       <QuickActions />
 
-      <DashboardCharts collectionRate={metrics.collection.rate} />
+      <div className="animate-fade-in-up animate-delay-2">
+        <DashboardCharts collectionRate={metrics.collection.rate} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-surface rounded-[var(--radius-lg)] border border-border">

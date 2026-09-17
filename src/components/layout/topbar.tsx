@@ -20,6 +20,7 @@ import {
   LogOut,
   ChevronDown,
   Info,
+  Layers,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
 import {
@@ -28,6 +29,7 @@ import {
   DEMO_APPLICANTS,
   DEMO_OCCUPANCIES,
 } from "@/lib/demo-data";
+import LanguageToggle from "@/components/ui/language-toggle";
 
 interface SearchResult {
   id: string;
@@ -141,6 +143,9 @@ interface Notification {
   group: "Today" | "Yesterday" | "Earlier";
   read: boolean;
   type: NotificationType;
+  throttled?: boolean;
+  batchCount?: number;
+  batchPerson?: string;
 }
 
 const NOTIFICATION_TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
@@ -173,13 +178,16 @@ const DEMO_NOTIFICATIONS: Notification[] = [
   },
   {
     id: "n3",
-    message: "Invoice INV-2026-0003 is overdue",
+    message: "3 overdue reminders sent to Ahmed Noor (batched daily)",
     icon: <FileWarning size={16} className="text-danger" />,
     href: "/billing/invoices",
     timestamp: "3 hours ago",
     group: "Today",
     read: false,
     type: "system",
+    throttled: true,
+    batchCount: 3,
+    batchPerson: "Ahmed Noor",
   },
   {
     id: "n4",
@@ -442,6 +450,9 @@ export default function TopBar({ user, onMobileMenuToggle, mobileMenuOpen }: Top
 
       {/* Right side */}
       <div className="flex items-center gap-2 ml-4">
+        {/* Language toggle */}
+        <LanguageToggle />
+
         {/* Notifications bell */}
         <div className="relative" ref={notifRef}>
           <button
@@ -493,6 +504,12 @@ export default function TopBar({ user, onMobileMenuToggle, mobileMenuOpen }: Top
                           >
                             {n.message}
                           </span>
+                          {n.throttled && (
+                            <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-medium text-warning bg-warning/10 px-1.5 py-0.5 rounded-full">
+                              <Layers size={10} />
+                              Batched ({n.batchCount}x)
+                            </span>
+                          )}
                           <span className="block text-xs text-text-3 mt-0.5">{n.timestamp}</span>
                         </span>
                         {!n.read && (

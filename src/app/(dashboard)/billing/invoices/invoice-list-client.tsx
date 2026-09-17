@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Search, Plus, AlertTriangle, FileText, Download, Upload } from "lucide-react";
 import Drawer from "@/components/ui/drawer";
 import Button from "@/components/ui/button";
@@ -8,7 +8,9 @@ import StatusBadge from "@/components/ui/status-badge";
 import MoneyDisplay from "@/components/ui/money-display";
 import EmptyState from "@/components/ui/empty-state";
 import Modal from "@/components/ui/modal";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { useUnsavedChanges } from "@/components/ui/unsaved-changes-dialog";
+import UnsavedChangesDialog from "@/components/ui/unsaved-changes-dialog";
+import { formatCurrency, formatDate, formatDateRelative } from "@/lib/utils";
 import { DEMO_PAYMENTS } from "@/lib/demo-data";
 
 interface Invoice {
@@ -21,6 +23,7 @@ interface Invoice {
   dueDate: string;
   status: string;
   period: string;
+  lastModified?: { date: string; user: string };
 }
 
 function getPeriodDates(period: string): { start: Date; end: Date } | null {
@@ -200,6 +203,15 @@ function InvoiceDetailDrawer({
   const [voidLoading, setVoidLoading] = useState(false);
   const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
   const [showVoidConfirm, setShowVoidConfirm] = useState(false);
+  const [paymentRef, setPaymentRef] = useState("");
+  const [paymentNotes, setPaymentNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("M-Pesa STK");
+
+  const hasPaymentChanges = useMemo(() => {
+    return !!(paymentRef || paymentNotes || paymentMethod !== "M-Pesa STK");
+  }, [paymentRef, paymentNotes, paymentMethod]);
+
+  const { showDialog: showPaymentUnsaved, handleStay: stayPayment, handleLeave: leavePayment } = useUnsavedChanges(hasPaymentChanges && showPaymentConfirm);
 
   const payments = invoice
     ? DEMO_PAYMENTS.filter((p) => p.invoiceNumber === invoice.number)
@@ -224,10 +236,25 @@ function InvoiceDetailDrawer({
   const handleRecordPayment = async () => {
     setRecordPaymentLoading(true);
     setShowPaymentConfirm(false);
+    setPaymentRef("");
+    setPaymentNotes("");
+    setPaymentMethod("M-Pesa STK");
     try {
       await new Promise((r) => setTimeout(r, 800));
     } finally {
       setRecordPaymentLoading(false);
+    }
+  };
+
+  const handleClosePayment = () => {
+    if (hasPaymentChanges) {
+      leavePayment();
+      setShowPaymentConfirm(false);
+      setPaymentRef("");
+      setPaymentNotes("");
+      setPaymentMethod("M-Pesa STK");
+    } else {
+      setShowPaymentConfirm(false);
     }
   };
 
@@ -400,13 +427,24 @@ function InvoiceDetailDrawer({
               ))}
             </div>
           </div>
+
+          {/* Last Modified Indicator */}
+          {invoice.lastModified && (
+            <div className="border-t border-border pt-4 mt-2">
+              <p className="text-xs text-text-3">
+                Last modified: {formatDateRelative(invoice.lastModified.date)} by{" "}
+                <span className="font-medium text-text-2">{invoice.lastModified.user}</span>
+              </p>
+            </div>
+          )}
         </div>
       )}
 
       {/* Record Payment Confirmation */}
+      <UnsavedChangesDialog open={showPaymentUnsaved} onStay={stayPayment} onLeave={() => { leavePayment(); setShowPaymentConfirm(false); setPaymentRef(""); setPaymentNotes(""); setPaymentMethod("M-Pesa STK"); }} />
       <Modal
         open={showPaymentConfirm}
-        onClose={() => setShowPaymentConfirm(false)}
+        onClose={handleClosePayment}
         title="Record Payment"
         size="md"
       >
@@ -447,15 +485,19 @@ function InvoiceDetailDrawer({
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-medium text-text-3 uppercase tracking-wider block mb-1.5">Method</label>
-                  <select className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold">
-                    <option>M-Pesa STK</option>
-                    <option>M-Pesa C2B</option>
-                    <option>Cash</option>
-                    <option>Bank Transfer</option>
-                  </select>
-                </div>
+              <div>
+                <label className="text-xs font-medium text-text-3 uppercase tracking-wider block mb-1.5">Method</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                >
+                  <option>M-Pesa STK</option>
+                  <option>M-Pesa C2B</option>
+                  <option>Cash</option>
+                  <option>Bank Transfer</option>
+                </select>
+              </div>
                 <div>
                   <label className="text-xs font-medium text-text-3 uppercase tracking-wider block mb-1.5">Date</label>
                   <input
@@ -471,6 +513,8 @@ function InvoiceDetailDrawer({
                 <input
                   type="text"
                   placeholder="e.g. QHK4X7B2RT"
+                  value={paymentRef}
+                  onChange={(e) => setPaymentRef(e.target.value)}
                   className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
                 />
               </div>
@@ -479,13 +523,15 @@ function InvoiceDetailDrawer({
                 <textarea
                   placeholder="Optional notes..."
                   rows={2}
+                  value={paymentNotes}
+                  onChange={(e) => setPaymentNotes(e.target.value)}
                   className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold resize-none"
                 />
               </div>
             </div>
 
             <div className="flex gap-2 justify-end pt-2">
-              <Button variant="secondary" onClick={() => setShowPaymentConfirm(false)}>
+              <Button variant="secondary" onClick={handleClosePayment}>
                 Cancel
               </Button>
               <Button loading={recordPaymentLoading} onClick={handleRecordPayment}>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   Building2,
@@ -10,8 +11,12 @@ import {
   Settings as SettingsIcon,
   FileText,
   Palette,
+  ClipboardCheck,
+  Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUnsavedChanges } from "@/components/ui/unsaved-changes-dialog";
+import UnsavedChangesDialog from "@/components/ui/unsaved-changes-dialog";
 
 const settingsGroups = [
   {
@@ -61,7 +66,7 @@ const settingsGroups = [
     title: "Security",
     description: "MFA, sessions, and access policies",
     icon: <Shield size={20} />,
-    href: "/settings?view=security",
+    href: "/settings/mfa",
   },
   {
     id: "appearance",
@@ -70,11 +75,30 @@ const settingsGroups = [
     icon: <Palette size={20} />,
     href: "/settings?view=appearance",
   },
+  {
+    id: "design-qa",
+    title: "Design QA",
+    description: "Design checklist and quality assurance",
+    icon: <ClipboardCheck size={20} />,
+    href: "/settings/qa",
+  },
+  {
+    id: "eng-qa",
+    title: "Engineering QA",
+    description: "Engineering checklist and quality assurance",
+    icon: <Wrench size={20} />,
+    href: "/settings/eng-qa",
+  },
 ];
 
 export default function SettingsPage() {
+  const [hasModifications, setHasModifications] = useState(false);
+  const { showDialog, handleStay, handleLeave } = useUnsavedChanges(hasModifications);
+
   return (
-    <div className="space-y-6">
+    <>
+      <UnsavedChangesDialog open={showDialog} onStay={handleStay} onLeave={handleLeave} />
+      <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 text-sm text-text-3 mb-1">
           <span className="text-text-primary">Settings</span>
@@ -100,6 +124,7 @@ export default function SettingsPage() {
           </Link>
         ))}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

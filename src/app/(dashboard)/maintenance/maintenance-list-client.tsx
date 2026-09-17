@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Plus, Camera, Loader2, X } from "lucide-react";
 import Button from "@/components/ui/button";
@@ -11,6 +11,8 @@ import Input from "@/components/ui/input";
 import Textarea from "@/components/ui/textarea";
 import EmptyState from "@/components/ui/empty-state";
 import MoneyDisplay from "@/components/ui/money-display";
+import { useUnsavedChanges } from "@/components/ui/unsaved-changes-dialog";
+import UnsavedChangesDialog from "@/components/ui/unsaved-changes-dialog";
 import { formatDate, formatCurrency, cn } from "@/lib/utils";
 import { DEMO_UNITS, DEMO_STAFF } from "@/lib/demo-data";
 
@@ -73,6 +75,12 @@ export default function MaintenanceListClient({ initialRequests }: { initialRequ
     statusFilter === "all" || r.status === statusFilter
   );
 
+  const hasFormChanges = useMemo(() => {
+    return !!(formTitle || formDescription || formPriority !== "medium" || formCategory !== "plumbing" || formUnit || formAssignedTo);
+  }, [formTitle, formDescription, formPriority, formCategory, formUnit, formAssignedTo]);
+
+  const { showDialog: showUnsaved, handleStay, handleLeave } = useUnsavedChanges(hasFormChanges && showCreate);
+
   const handleCreate = async () => {
     setCreating(true);
     await new Promise((r) => setTimeout(r, 1000));
@@ -86,8 +94,24 @@ export default function MaintenanceListClient({ initialRequests }: { initialRequ
     setFormAssignedTo("");
   };
 
+  const handleCloseCreate = () => {
+    if (hasFormChanges) {
+      handleLeave();
+      setShowCreate(false);
+      setFormTitle("");
+      setFormDescription("");
+      setFormPriority("medium");
+      setFormCategory("plumbing");
+      setFormUnit("");
+      setFormAssignedTo("");
+    } else {
+      setShowCreate(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      <UnsavedChangesDialog open={showUnsaved} onStay={handleStay} onLeave={() => { handleLeave(); setShowCreate(false); setFormTitle(""); setFormDescription(""); setFormPriority("medium"); setFormCategory("plumbing"); setFormUnit(""); setFormAssignedTo(""); }} />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-text-3 mb-1">
@@ -293,7 +317,7 @@ export default function MaintenanceListClient({ initialRequests }: { initialRequ
       {/* Create request modal */}
       <Modal
         open={showCreate}
-        onClose={() => setShowCreate(false)}
+        onClose={handleCloseCreate}
         title="Log Maintenance Request"
         description="Report a new maintenance issue"
         size="md"
@@ -370,7 +394,7 @@ export default function MaintenanceListClient({ initialRequests }: { initialRequ
             </div>
           </div>
           <div className="flex gap-3 pt-4 sticky bottom-0 bg-surface pb-2">
-            <Button variant="secondary" className="flex-1" onClick={() => setShowCreate(false)}>
+            <Button variant="secondary" className="flex-1" onClick={handleCloseCreate}>
               Cancel
             </Button>
             <Button className="flex-1" loading={creating} onClick={handleCreate}>

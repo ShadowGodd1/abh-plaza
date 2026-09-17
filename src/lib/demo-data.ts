@@ -48,16 +48,16 @@ export const DEMO_OCCUPANCIES = [
 ];
 
 export const DEMO_INVOICES = [
-  { id: "inv-1", number: "INV-2026-0001", unit: "A-04", tenant: "Ahmed Noor", amount: 3500000, amountPaid: 3500000, dueDate: "2026-09-05", status: "paid", period: "Sep 2026" },
-  { id: "inv-2", number: "INV-2026-0002", unit: "A-02", tenant: "Sara Ali", amount: 3000000, amountPaid: 3000000, dueDate: "2026-09-05", status: "paid", period: "Sep 2026" },
-  { id: "inv-3", number: "INV-2026-0003", unit: "B-01", tenant: "Omar Hassan", amount: 1200000, amountPaid: 0, dueDate: "2026-09-10", status: "overdue", period: "Sep 2026" },
-  { id: "inv-4", number: "INV-2026-0004", unit: "A-01", tenant: "Ibrahim Mohamed", amount: 2500000, amountPaid: 1500000, dueDate: "2026-09-15", status: "partial", period: "Sep 2026" },
-  { id: "inv-5", number: "INV-2026-0005", unit: "B-03", tenant: "Amina Osman", amount: 4000000, amountPaid: 0, dueDate: "2026-09-20", status: "pending", period: "Sep 2026" },
-  { id: "inv-6", number: "INV-2026-0006", unit: "C-01", tenant: "Hassan Ali", amount: 2000000, amountPaid: 0, dueDate: "2026-09-25", status: "pending", period: "Sep 2026" },
-  { id: "inv-7", number: "INV-2026-0007", unit: "C-03", tenant: "Fatima Khan", amount: 1500000, amountPaid: 0, dueDate: "2026-10-05", status: "pending", period: "Oct 2026" },
-  { id: "inv-8", number: "INV-2026-0008", unit: "C-04", tenant: "John Kamau", amount: 2800000, amountPaid: 2800000, dueDate: "2026-09-05", status: "paid", period: "Sep 2026" },
-  { id: "inv-9", number: "INV-2026-0009", unit: "A-01", tenant: "Ibrahim Mohamed", amount: 500000, amountPaid: 500000, dueDate: "2026-09-30", status: "paid", period: "Sep 2026 (SC)" },
-  { id: "inv-10", number: "INV-2026-0010", unit: "A-02", tenant: "Sara Ali", amount: 3000000, amountPaid: 0, dueDate: "2026-10-05", status: "pending", period: "Oct 2026" },
+  { id: "inv-1", number: "INV-2026-0001", unit: "A-04", tenant: "Ahmed Noor", amount: 3500000, amountPaid: 3500000, dueDate: "2026-09-05", status: "paid", period: "Sep 2026", lastModified: { date: "2026-09-14T14:30:00", user: "Admin User" } },
+  { id: "inv-2", number: "INV-2026-0002", unit: "A-02", tenant: "Sara Ali", amount: 3000000, amountPaid: 3000000, dueDate: "2026-09-05", status: "paid", period: "Sep 2026", lastModified: { date: "2026-09-14T14:28:00", user: "Admin User" } },
+  { id: "inv-3", number: "INV-2026-0003", unit: "B-01", tenant: "Omar Hassan", amount: 1200000, amountPaid: 0, dueDate: "2026-09-10", status: "overdue", period: "Sep 2026", lastModified: { date: "2026-09-15T09:10:00", user: "James Mwangi" } },
+  { id: "inv-4", number: "INV-2026-0004", unit: "A-01", tenant: "Ibrahim Mohamed", amount: 2500000, amountPaid: 1500000, dueDate: "2026-09-15", status: "partial", period: "Sep 2026", lastModified: { date: "2026-09-16T11:45:00", user: "Admin User" } },
+  { id: "inv-5", number: "INV-2026-0005", unit: "B-03", tenant: "Amina Osman", amount: 4000000, amountPaid: 0, dueDate: "2026-09-20", status: "pending", period: "Sep 2026", lastModified: { date: "2026-09-17T08:00:00", user: "Admin User" } },
+  { id: "inv-6", number: "INV-2026-0006", unit: "C-01", tenant: "Hassan Ali", amount: 2000000, amountPaid: 0, dueDate: "2026-09-25", status: "pending", period: "Sep 2026", lastModified: { date: "2026-09-17T08:05:00", user: "Admin User" } },
+  { id: "inv-7", number: "INV-2026-0007", unit: "C-03", tenant: "Fatima Khan", amount: 1500000, amountPaid: 0, dueDate: "2026-10-05", status: "pending", period: "Oct 2026", lastModified: { date: "2026-09-17T08:10:00", user: "Admin User" } },
+  { id: "inv-8", number: "INV-2026-0008", unit: "C-04", tenant: "John Kamau", amount: 2800000, amountPaid: 2800000, dueDate: "2026-09-05", status: "paid", period: "Sep 2026", lastModified: { date: "2026-09-14T10:20:00", user: "Admin User" } },
+  { id: "inv-9", number: "INV-2026-0009", unit: "A-01", tenant: "Ibrahim Mohamed", amount: 500000, amountPaid: 500000, dueDate: "2026-09-30", status: "paid", period: "Sep 2026 (SC)", lastModified: { date: "2026-09-30T16:00:00", user: "Admin User" } },
+  { id: "inv-10", number: "INV-2026-0010", unit: "A-02", tenant: "Sara Ali", amount: 3000000, amountPaid: 0, dueDate: "2026-10-05", status: "pending", period: "Oct 2026", lastModified: { date: "2026-09-17T08:15:00", user: "Admin User" } },
 ];
 
 export const DEMO_PAYMENTS = [
@@ -68,6 +68,45 @@ export const DEMO_PAYMENTS = [
   { id: "pay-5", invoiceNumber: "INV-2026-0008", tenant: "John Kamau", unit: "C-04", amount: 2800000, method: "mpesa_stk", receipt: "DEF456GHI", date: "2026-09-05", status: "completed" },
   { id: "pay-6", invoiceNumber: "INV-2026-0009", tenant: "Ibrahim Mohamed", unit: "A-01", amount: 500000, method: "bank", receipt: "BNK789JKL", date: "2026-09-30", status: "completed" },
   { id: "pay-7", invoiceNumber: "INV-2026-0005", tenant: "Amina Osman", unit: "B-03", amount: 4000000, method: "mpesa_stk", receipt: null, date: "2026-09-16", status: "processing" },
+];
+
+export const DEMO_PAYMENT_EXCEPTIONS = [
+  {
+    id: "exc-1",
+    transactionId: "SBI4A7K9L2",
+    phone: "254712987654",
+    amount: 1500000,
+    dateReceived: "2026-09-15",
+    reason: "no_match" as const,
+    status: "pending" as const,
+  },
+  {
+    id: "exc-2",
+    transactionId: "PLM9X3C8VW",
+    phone: "254723456123",
+    amount: 2500000,
+    dateReceived: "2026-09-14",
+    reason: "multiple_matches" as const,
+    status: "pending" as const,
+  },
+  {
+    id: "exc-3",
+    transactionId: "QHK7Y2K5RT",
+    phone: "254734567890",
+    amount: 800000,
+    dateReceived: "2026-09-13",
+    reason: "amount_mismatch" as const,
+    status: "pending" as const,
+  },
+  {
+    id: "exc-4",
+    transactionId: "DEF3G6H9LM",
+    phone: "254745678912",
+    amount: 4200000,
+    dateReceived: "2026-09-12",
+    reason: "no_match" as const,
+    status: "ignored" as const,
+  },
 ];
 
 export const DEMO_LEDGER = [

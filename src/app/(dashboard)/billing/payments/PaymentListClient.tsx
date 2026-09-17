@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Search, AlertTriangle, RotateCw } from "lucide-react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { Search, AlertTriangle, RotateCw, Send } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 import StatusBadge from "@/components/ui/status-badge";
 import Drawer from "@/components/ui/drawer";
 import MoneyDisplay from "@/components/ui/money-display";
@@ -59,6 +60,40 @@ function getDate(p: Payment): string {
 export default function PaymentListClient({ initialPayments }: { initialPayments: Payment[] }) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Payment | null>(null);
+  const { toast } = useToast();
+  const [stkCooldown, setStkCooldown] = useState(0);
+  const lastStkClickRef = useRef<number>(0);
+  const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (stkCooldown <= 0) {
+      if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+      return;
+    }
+    cooldownTimerRef.current = setInterval(() => {
+      setStkCooldown((prev) => {
+        if (prev <= 1) {
+          if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+    };
+  }, [stkCooldown]);
+
+  const handleSendStk = useCallback(() => {
+    const now = Date.now();
+    if (now - lastStkClickRef.current < 5000) {
+      toast("warning", "Payment request already in progress. Please wait for the previous request to complete.");
+      return;
+    }
+    lastStkClickRef.current = now;
+    setStkCooldown(30);
+    toast("success", "STK Push sent successfully.");
+  }, [toast]);
 
   const filteredPayments = useMemo(() => {
     if (!search.trim()) return initialPayments;
@@ -219,6 +254,19 @@ export default function PaymentListClient({ initialPayments }: { initialPayments
                 <span className="text-text-primary font-medium">{formatDate(getDate(selected))}</span>
               </div>
             </div>
+
+            {selected.method === "mpesa_stk" && selected.status === "processing" && (
+              <div className="border-t border-border pt-4">
+                <button
+                  disabled={stkCooldown > 0}
+                  onClick={handleSendStk}
+                  className="w-full h-10 inline-flex items-center justify-center gap-2 font-medium transition-all duration-150 bg-gold text-ink hover:bg-gold-light active:bg-gold-dark disabled:opacity-50 disabled:cursor-not-allowed rounded-[var(--radius-md)] text-sm"
+                >
+                  <Send size={14} />
+                  {stkCooldown > 0 ? `Wait ${stkCooldown}s...` : "Send STK Push"}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </Drawer>

@@ -99,6 +99,7 @@ const adminNavItems: NavItem[] = [
     children: [
       { label: "Invoices", href: "/billing/invoices" },
       { label: "Payments", href: "/billing/payments" },
+      { label: "Exceptions", href: "/billing/exceptions" },
     ],
   },
   { label: "Ledger", href: "/ledger", icon: <Wallet size={20} /> },

@@ -15,6 +15,7 @@ import {
   Clock,
   AlertTriangle,
   Circle,
+  Printer,
 } from "lucide-react";
 import {
   BarChart,
@@ -49,7 +50,7 @@ type View = "income" | "expenses" | "collection" | "invoices" | "occupancy" | "m
 const COLORS = ["#22c55e", "#f59e0b", "#3b82f6", "#ef4444", "#8b5cf6", "#06b6d4"];
 const STATUS_COLORS = { paid: "#22c55e", pending: "#f59e0b", overdue: "#ef4444", partial: "#3b82f6" };
 
-function SectionHeader({ icon, title, onBack }: { icon: React.ReactNode; title: string; onBack: () => void }) {
+function SectionHeader({ icon, title, onBack, printType }: { icon: React.ReactNode; title: string; onBack: () => void; printType?: string }) {
   return (
     <div className="flex items-center gap-4 mb-6">
       <button
@@ -60,10 +61,19 @@ function SectionHeader({ icon, title, onBack }: { icon: React.ReactNode; title: 
         Reports
       </button>
       <div className="h-5 w-px bg-border" />
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-1">
         {icon}
         <h1 className="text-2xl font-semibold text-text-primary">{title}</h1>
       </div>
+      {printType && (
+        <button
+          onClick={() => window.open(`/reports/print?type=${printType}`, "_blank")}
+          className="no-print flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-2 border border-border rounded-[var(--radius-md)] hover:bg-surface-2 transition-colors"
+        >
+          <Printer size={14} />
+          Print
+        </button>
+      )}
     </div>
   );
 }
@@ -96,7 +106,7 @@ function IncomeReport({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="space-y-6">
-      <SectionHeader icon={<TrendingUp size={20} className="text-success" />} title="Income Report" onBack={onBack} />
+      <SectionHeader icon={<TrendingUp size={20} className="text-success" />} title="Income Report" onBack={onBack} printType="income" />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard label="Total Income" value={<MoneyDisplay amount={totalIncome} className="text-success" size="lg" />} />
@@ -172,7 +182,7 @@ function ExpenseReport({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="space-y-6">
-      <SectionHeader icon={<TrendingDown size={20} className="text-danger" />} title="Expense Report" onBack={onBack} />
+      <SectionHeader icon={<TrendingDown size={20} className="text-danger" />} title="Expense Report" onBack={onBack} printType="expenses" />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <StatCard label="Total Expenses" value={<MoneyDisplay amount={totalExpenses} className="text-danger" size="lg" />} />
@@ -258,7 +268,7 @@ function CollectionReport({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="space-y-6">
-      <SectionHeader icon={<CreditCard size={20} className="text-gold" />} title="Collection Report" onBack={onBack} />
+      <SectionHeader icon={<CreditCard size={20} className="text-gold" />} title="Collection Report" onBack={onBack} printType="collection" />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard label="Collection Rate" value={<p className="text-2xl font-bold text-success font-tabular">{collectionRate}%</p>} />
@@ -438,7 +448,7 @@ function OccupancyReport({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="space-y-6">
-      <SectionHeader icon={<Building2 size={20} className="text-text-2" />} title="Occupancy Report" onBack={onBack} />
+      <SectionHeader icon={<Building2 size={20} className="text-text-2" />} title="Occupancy Report" onBack={onBack} printType="occupancy" />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-surface rounded-[var(--radius-lg)] border border-border p-4 col-span-2 md:col-span-1">

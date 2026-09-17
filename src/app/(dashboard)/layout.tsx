@@ -4,6 +4,8 @@ import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import TopBar from "@/components/layout/topbar";
 import { ToastProvider } from "@/components/ui/toast";
+import ConnectionStatus from "@/components/ui/connection-status";
+import DemoBanner from "@/components/ui/demo-banner";
 import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({
@@ -19,6 +21,7 @@ export default function DashboardLayout({
 
   return (
     <ToastProvider>
+      <ConnectionStatus />
       <div className="min-h-screen bg-paper">
         {/* Desktop sidebar */}
         <div className="hidden lg:block">
@@ -45,6 +48,7 @@ export default function DashboardLayout({
             onMobileMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)}
             mobileMenuOpen={mobileMenuOpen}
           />
+          <DemoBanner />
           <main className="flex-1 p-6">{children}</main>
         </div>
       </div>

@@ -6,7 +6,7 @@ export default function TenantLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen bg-paper density-comfortable">
       <main className="pb-20 lg:pb-0">{children}</main>
       <TenantNav />
     </div>

@@ -17,6 +17,7 @@ function mapInvoice(inv: any) {
     period: inv.period_start && inv.period_end
       ? `${new Date(inv.period_start).toLocaleDateString("en-KE", { month: "short", year: "numeric" })} – ${new Date(inv.period_end).toLocaleDateString("en-KE", { month: "short", year: "numeric" })}`
       : inv.period || "",
+    lastModified: inv.lastModified || undefined,
   };
 }
 

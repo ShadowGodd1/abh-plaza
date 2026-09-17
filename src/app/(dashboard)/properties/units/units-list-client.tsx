@@ -6,6 +6,7 @@ import EmptyState from "@/components/ui/empty-state";
 import Drawer from "@/components/ui/drawer";
 import StatusBadge from "@/components/ui/status-badge";
 import MoneyDisplay from "@/components/ui/money-display";
+import ImageGallery, { type GalleryImage } from "@/components/ui/image-gallery";
 import { cn, formatCurrency, getStatusColor, getStatusLabel, formatDate } from "@/lib/utils";
 import { DEMO_OCCUPANCIES, DEMO_INVOICES, DEMO_MAINTENANCE } from "@/lib/demo-data";
 
@@ -171,7 +172,7 @@ function ChecklistSection({
   );
 }
 
-type UnitTab = "overview" | "occupancy" | "billing" | "maintenance" | "documents" | "activity";
+type UnitTab = "overview" | "occupancy" | "billing" | "maintenance" | "documents" | "activity" | "photos";
 
 interface Unit {
   id: string;
@@ -359,6 +360,7 @@ const UNIT_TABS: { key: UnitTab; label: string }[] = [
   { key: "billing", label: "Billing" },
   { key: "maintenance", label: "Maintenance" },
   { key: "documents", label: "Documents" },
+  { key: "photos", label: "Photos" },
   { key: "activity", label: "Activity" },
 ];
 
@@ -714,6 +716,73 @@ function UnitDetailTabs({
           </div>
         </div>
       )}
+
+      {tab === "photos" && (
+        <UnitPhotosTab unit={unit} />
+      )}
+    </div>
+  );
+}
+
+function UnitPhotosTab({ unit }: { unit: Unit }) {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  const unitImages: GalleryImage[] = [
+    { src: "", alt: "Living Room", caption: "Living Room" },
+    { src: "", alt: "Kitchen", caption: "Kitchen" },
+    { src: "", alt: "Bedroom", caption: "Bedroom" },
+    { src: "", alt: "Exterior", caption: "Exterior" },
+  ];
+
+  const gradients = [
+    "from-amber-200 to-orange-300",
+    "from-emerald-200 to-teal-300",
+    "from-blue-200 to-indigo-300",
+    "from-rose-200 to-pink-300",
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* Main image area */}
+      <div className="relative">
+        <div className="aspect-video rounded-[var(--radius-md)] overflow-hidden bg-surface-2 border border-border">
+          <div className={`w-full h-full bg-gradient-to-br ${gradients[selectedImageIndex]} flex flex-col items-center justify-center`}>
+            <Camera size={32} className="text-ink/30 mb-2" />
+            <span className="text-sm font-medium text-ink/50">{unit.label}</span>
+            <span className="text-xs text-ink/40 mt-1">{unitImages[selectedImageIndex].caption}</span>
+          </div>
+        </div>
+        <button className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-surface/90 border border-border rounded-[var(--radius-sm)] text-xs font-medium text-text-primary hover:bg-surface transition-colors shadow-sm">
+          <Upload size={12} />
+          Upload Photo
+        </button>
+      </div>
+
+      {/* Thumbnail strip */}
+      <div className="flex gap-2">
+        {unitImages.map((img, i) => (
+          <button
+            key={i}
+            onClick={() => setSelectedImageIndex(i)}
+            className={cn(
+              "relative w-20 h-20 rounded-[var(--radius-sm)] overflow-hidden border-2 transition-colors property-photo-thumb shrink-0",
+              i === selectedImageIndex
+                ? "border-gold"
+                : "border-transparent hover:border-border-strong"
+            )}
+          >
+            <div className={`w-full h-full bg-gradient-to-br ${gradients[i]} flex items-center justify-center`}>
+              <span className="text-[10px] font-medium text-ink/50">{img.caption}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Upload button (mobile) */}
+      <button className="sm:hidden flex items-center justify-center gap-2 w-full py-3 border border-dashed border-border rounded-[var(--radius-md)] text-sm font-medium text-text-3 hover:text-gold hover:border-gold/50 transition-colors">
+        <Upload size={16} />
+        Upload Photo
+      </button>
     </div>
   );
 }
