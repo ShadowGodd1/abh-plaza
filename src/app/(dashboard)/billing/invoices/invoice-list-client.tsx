@@ -322,7 +322,7 @@ function InvoiceDetailDrawer({
           {isOverpaid && (
             <div className="bg-success-bg border border-success/20 rounded-[var(--radius-md)] px-4 py-3">
               <p className="text-sm font-medium text-success">
-                KES {creditAmount.toLocaleString("en-KE")} credit
+                {formatCurrency(creditAmount)} credit
               </p>
               <p className="text-xs text-success/80 mt-0.5">
                 Overpayment of {formatCurrency(creditAmount)} will be applied to future invoices.

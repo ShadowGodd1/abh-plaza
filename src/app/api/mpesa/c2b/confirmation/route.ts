@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 
+function verifyWebhookSecret(request: NextRequest): boolean {
+  const webhookSecret = process.env.MPESA_WEBHOOK_SECRET;
+  if (!webhookSecret) return true;
+  const authHeader = request.headers.get("authorization") || request.headers.get("X-M-Pesa-Secret");
+  return authHeader === `Bearer ${webhookSecret}` || authHeader === webhookSecret;
+}
+
 // M-Pesa C2B Confirmation URL - called by Safaricom after payment is confirmed
 export async function POST(request: NextRequest) {
+  if (!verifyWebhookSecret(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     console.log("C2B Confirmation received:", JSON.stringify(body));
@@ -18,45 +29,21 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createServiceClient();
 
-    // Idempotency check
-    if (TransID) {
-      const { data: existing } = await supabase
-        .from("payments")
-        .select("id")
-        .eq("mpesa_receipt", TransID)
-        .single();
-
-      if (existing) {
-        console.log("Duplicate C2B confirmation:", TransID);
-        return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });
-      }
-    }
-
     const amountInCents = Math.round(parseFloat(TransAmount) * 100);
 
     // Try to match invoice by reference
     let matchedInvoiceId: string | null = null;
-    let matchedInvoiceOccupancyId: string | null = null;
-    let matchedInvoiceAmountPaid = 0;
-    let matchedInvoiceAmountDue = 0;
-    let matchedInvoiceNumber = "";
-    let matchedInvoiceStatus = "";
 
     if (BillRefNumber) {
       const { data } = await supabase
         .from("invoices")
-        .select("id, occupancy_id, amount_due, amount_paid, invoice_number, status")
+        .select("id")
         .eq("invoice_number", BillRefNumber)
         .in("status", ["pending", "partial", "overdue"])
         .single();
 
       if (data) {
         matchedInvoiceId = data.id;
-        matchedInvoiceOccupancyId = data.occupancy_id;
-        matchedInvoiceAmountPaid = data.amount_paid;
-        matchedInvoiceAmountDue = data.amount_due;
-        matchedInvoiceNumber = data.invoice_number;
-        matchedInvoiceStatus = data.status;
       }
     }
 
@@ -76,70 +63,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });
     }
 
-    // Record payment
-    await supabase.from("payments").insert({
-      invoice_id: matchedInvoiceId,
-      amount: amountInCents,
-      method: "mpesa_c2b",
-      mpesa_receipt: TransID,
-      status: "completed",
-      paid_at: new Date().toISOString(),
-      notes: `C2B payment from ${FirstName || ""} ${LastName || ""}`.trim(),
+    // Record payment via the centralized record_payment function
+    const { error } = await supabase.rpc("record_payment", {
+      p_invoice_id: matchedInvoiceId,
+      p_amount: amountInCents,
+      p_method: "mpesa_c2b",
+      p_mpesa_receipt: TransID || null,
+      p_recorded_by: null,
+      p_notes: `C2B payment from ${FirstName || ""} ${LastName || ""}`.trim() || null,
+      p_phone: MSISDN || null,
     });
 
-    // Update invoice
-    const newAmountPaid = matchedInvoiceAmountPaid + amountInCents;
-    const newStatus =
-      newAmountPaid >= matchedInvoiceAmountDue
-        ? "paid"
-        : newAmountPaid > 0
-        ? "partial"
-        : matchedInvoiceStatus;
-
-    await supabase
-      .from("invoices")
-      .update({
-        amount_paid: newAmountPaid,
-        status: newStatus,
-      })
-      .eq("id", matchedInvoiceId);
-
-    // Write ledger entry via RPC
-    const { data: occupancyRows } = await supabase
-      .from("occupancies")
-      .select("type, unit_id")
-      .eq("id", matchedInvoiceOccupancyId);
-
-    const occupancy = occupancyRows?.[0];
-
-    if (occupancy) {
-      const ledgerCategory =
-        occupancy.type === "tenancy" ? "rent" : "service_charge";
-
-      const { data: unitData } = await supabase
-        .from("units")
-        .select("property_id")
-        .eq("id", occupancy.unit_id)
-        .single();
-
-      if (unitData) {
-        const { data: propData } = await supabase
-          .from("properties")
-          .select("organization_id")
-          .eq("id", unitData.property_id)
-          .single();
-
-        if (propData) {
-          await supabase.rpc("write_ledger_entry", {
-            p_organization_id: propData.organization_id,
-            p_type: "income",
-            p_category: ledgerCategory,
-            p_amount: amountInCents,
-            p_description: `C2B payment ${TransID} — ${matchedInvoiceNumber}`,
-            p_related_invoice_id: matchedInvoiceId,
-          });
-        }
-      }
+    if (error) {
+      console.error("record_payment failed for C2B:", error.message);
+      // Still log to exceptions so we don't lose the payment
+      await supabase.from("payment_exceptions").insert({
+        mpesa_receipt: TransID,
+        amount: amountInCents,
+        account_reference: BillRefNumber,
+        raw_payload: body,
+        reason: "record_payment failed: " + error.message,
+        status: "pending",
+      });
     }
 
     return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });

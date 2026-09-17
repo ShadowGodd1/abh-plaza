@@ -16,9 +16,10 @@ interface MaintenanceRequest {
 
 interface TenantMaintenanceClientProps {
   initialRequests: MaintenanceRequest[];
+  unitLabel: string;
 }
 
-export default function TenantMaintenanceClient({ initialRequests }: TenantMaintenanceClientProps) {
+export default function TenantMaintenanceClient({ initialRequests, unitLabel }: TenantMaintenanceClientProps) {
   const [showForm, setShowForm] = useState(false);
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -78,7 +79,7 @@ export default function TenantMaintenanceClient({ initialRequests }: TenantMaint
                 <Camera size={20} />
               </button>
             </div>
-            <div className="text-xs text-text-3">Unit: A-04</div>
+            <div className="text-xs text-text-3">Unit: {unitLabel}</div>
             <Button className="w-full" onClick={handleSubmit}>
               Submit request
             </Button>

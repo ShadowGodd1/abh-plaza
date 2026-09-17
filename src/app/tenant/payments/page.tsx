@@ -1,12 +1,17 @@
-import { getPayments, getInvoices } from "@/lib/data";
+import { redirect } from "next/navigation";
+import { getPayments, getInvoices, getCurrentOccupancy } from "@/lib/data";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import TenantPaymentsClient from "./tenant-payments-client";
 
 export default async function TenantPaymentsPage() {
+  const occupancy = await getCurrentOccupancy("tenant");
+  if (!occupancy) redirect("/login");
+
+  const unitLabel = occupancy.unitLabel;
   const [payments, invoices] = await Promise.all([getPayments(), getInvoices()]);
 
   const tenantInvoices = invoices
-    .filter((inv: any) => (inv.occupancy?.unit?.label === "A-04") || (inv.unit === "A-04"))
+    .filter((inv: any) => (inv.occupancy?.unit?.label === unitLabel) || (inv.unit === unitLabel))
     .map((inv: any) => ({
       id: inv.id,
       number: inv.invoice_number || inv.number,
@@ -17,7 +22,7 @@ export default async function TenantPaymentsPage() {
     }));
 
   const tenantPayments = payments
-    .filter((p: any) => p.unit === "A-04" || p.invoice?.occupancy?.unit?.label === "A-04")
+    .filter((p: any) => p.unit === unitLabel || p.invoice?.occupancy?.unit?.label === unitLabel)
     .map((p: any) => ({
       month: new Date(p.paid_at || p.date).toLocaleDateString("en-KE", { month: "short", year: "numeric" }),
       amount: p.amount,
@@ -32,6 +37,7 @@ export default async function TenantPaymentsPage() {
     <TenantPaymentsClient
       invoices={outstanding}
       recentPayments={tenantPayments}
+      unitLabel={unitLabel}
     />
   );
 }

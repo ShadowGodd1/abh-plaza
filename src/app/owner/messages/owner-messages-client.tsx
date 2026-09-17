@@ -23,14 +23,15 @@ interface MessageThread {
 
 interface OwnerMessagesClientProps {
   threads: MessageThread[];
+  ownerName: string;
 }
 
 const demoMessages: Message[] = [
-  { id: "1", sender: "admin", body: "Hello Ibrahim, your service charge invoice for September has been generated.", time: "2026-09-10T08:00:00" },
+  { id: "1", sender: "admin", body: "Hello, your service charge invoice for September has been generated.", time: "2026-09-10T08:00:00" },
   { id: "2", sender: "owner", body: "Thank you. Payment has been made.", time: "2026-09-10T14:30:00" },
 ];
 
-export default function OwnerMessagesClient({ threads }: OwnerMessagesClientProps) {
+export default function OwnerMessagesClient({ threads, ownerName }: OwnerMessagesClientProps) {
   const [newMessage, setNewMessage] = useState("");
 
   return (

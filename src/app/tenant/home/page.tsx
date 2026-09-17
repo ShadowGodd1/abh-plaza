@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import Button from "@/components/ui/button";
-import { getDashboardMetrics } from "@/lib/data";
+import { getDashboardMetrics, getCurrentOccupancy } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
 import TenantHomeClient from "./tenant-home-client";
 
@@ -10,11 +11,15 @@ function formatDueDate(date: string): string {
 }
 
 export default async function TenantHomePage() {
+  const occupancy = await getCurrentOccupancy("tenant");
+  if (!occupancy) redirect("/login");
+
+  const firstName = occupancy.personName.split(" ")[0];
   const metrics = await getDashboardMetrics();
 
   const tenant = {
-    name: "Ahmed",
-    unit: "A-04",
+    name: firstName,
+    unit: occupancy.unitLabel,
     status: "occupied",
     outstanding: metrics.overdue.amount || (metrics.outstandingInvoices[0] ? (metrics.outstandingInvoices[0] as any).amount : 0),
     dueDate: metrics.outstandingInvoices[0] ? (metrics.outstandingInvoices[0] as any).dueDate : "",

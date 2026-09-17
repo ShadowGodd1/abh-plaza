@@ -16,21 +16,9 @@ interface OwnerHomeClientProps {
     }>;
   };
   greeting: string;
+  ownerName: string;
+  unitLabel: string;
 }
-
-const owner = {
-  name: "Ibrahim",
-  unit: "A-01",
-  type: "ownership",
-  serviceCharge: 500000,
-  outstanding: 0,
-};
-
-const recentPayments = [
-  { month: "Sep", amount: 500000, paid: true },
-  { month: "Aug", amount: 500000, paid: true },
-  { month: "Jul", amount: 500000, paid: true },
-];
 
 const serviceChargeBreakdown = [
   { item: "Security Services", amount: 150000 },
@@ -40,7 +28,20 @@ const serviceChargeBreakdown = [
   { item: "Sinking Fund", amount: 50000 },
 ];
 
-export default function OwnerHomeClient({ metrics, greeting }: OwnerHomeClientProps) {
+export default function OwnerHomeClient({ metrics, greeting, ownerName, unitLabel }: OwnerHomeClientProps) {
+  const owner = {
+    name: ownerName,
+    unit: unitLabel,
+    type: "ownership",
+    serviceCharge: 500000,
+    outstanding: 0,
+  };
+
+  const recentPayments = [
+    { month: "Sep", amount: 500000, paid: true },
+    { month: "Aug", amount: 500000, paid: true },
+    { month: "Jul", amount: 500000, paid: true },
+  ];
   const totalPaid = recentPayments.filter((p) => p.paid).reduce((s, p) => s + p.amount, 0);
 
   return (

@@ -32,107 +32,35 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });
       }
 
-      // Idempotency check: check for existing payment with this receipt
-      const { data: existingPayment } = await supabase
-        .from("payments")
-        .select("id")
-        .eq("mpesa_receipt", mpesaReceipt)
-        .single();
-
-      if (existingPayment) {
-        console.log("Duplicate callback for receipt:", mpesaReceipt);
-        return NextResponse.json({ ResultCode: 0, ResultDesc: "Success" });
-      }
-
-      // Update payment record
       if (paymentId) {
-        const { data: payment } = await supabase
+        // Get the pending payment to retrieve invoice_id and amount
+        const { data: pendingPayment } = await supabase
           .from("payments")
           .select("id, amount, invoice_id")
           .eq("id", paymentId)
+          .eq("status", "pending")
           .single();
 
-        const { data: invoice } = payment
-          ? await supabase
-              .from("invoices")
-              .select("id, occupancy_id, amount_due, amount_paid, invoice_number, status")
-              .eq("id", payment.invoice_id)
-              .single()
-          : { data: null };
+        if (pendingPayment) {
+          // Remove the pending payment record — record_payment will create a completed one
+          await supabase.from("payments").delete().eq("id", paymentId);
 
-        if (payment && invoice) {
-          // Update payment with receipt
-          await supabase
-            .from("payments")
-            .update({
-              mpesa_receipt: mpesaReceipt,
-              status: "completed",
-              paid_at: new Date().toISOString(),
-            })
-            .eq("id", paymentId);
+          // Record payment via the centralized function
+          const { error } = await supabase.rpc("record_payment", {
+            p_invoice_id: pendingPayment.invoice_id,
+            p_amount: pendingPayment.amount,
+            p_method: "mpesa_stk",
+            p_mpesa_receipt: mpesaReceipt,
+            p_recorded_by: null,
+            p_notes: `M-Pesa STK payment`,
+            p_phone: null,
+          });
 
-          // Update invoice status and amount_paid
-          const newAmountPaid = invoice.amount_paid + payment.amount;
-          const newStatus =
-            newAmountPaid >= invoice.amount_due
-              ? "paid"
-              : newAmountPaid > 0
-              ? "partial"
-              : invoice.status;
-
-          await supabase
-            .from("invoices")
-            .update({
-              amount_paid: newAmountPaid,
-              status: newStatus,
-            })
-            .eq("id", payment.invoice_id);
-
-          // Write ledger entry
-          const { data: occupancyRows } = await supabase
-            .from("occupancies")
-            .select("type")
-            .eq("id", invoice.occupancy_id);
-
-          const occupancy = occupancyRows?.[0];
-
-          if (occupancy) {
-            const ledgerCategory =
-              occupancy.type === "tenancy" ? "rent" : "service_charge";
-
-            const { data: unitRows } = await supabase
-              .from("occupancies")
-              .select("unit_id")
-              .eq("id", invoice.occupancy_id);
-
-            const unitId = unitRows?.[0]?.unit_id;
-            if (unitId) {
-              const { data: unitData } = await supabase
-                .from("units")
-                .select("property_id")
-                .eq("id", unitId)
-                .single();
-
-              if (unitData) {
-                const { data: propRows } = await supabase
-                  .from("properties")
-                  .select("organization_id")
-                  .eq("id", unitData.property_id)
-                  .single();
-
-                if (propRows) {
-                  await supabase.rpc("write_ledger_entry", {
-                    p_organization_id: propRows.organization_id,
-                    p_type: "income",
-                    p_category: ledgerCategory,
-                    p_amount: payment.amount,
-                    p_description: `M-Pesa payment ${mpesaReceipt} — ${invoice.invoice_number}`,
-                    p_related_invoice_id: payment.invoice_id,
-                  });
-                }
-              }
-            }
+          if (error) {
+            console.error("record_payment failed for STK callback:", error.message);
           }
+        } else {
+          console.log("Pending payment not found for id:", paymentId);
         }
       }
     } else {

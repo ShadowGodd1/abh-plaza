@@ -1,11 +1,12 @@
-import { getUnits } from "@/lib/data";
+import { redirect } from "next/navigation";
+import { getCurrentOccupancy } from "@/lib/data";
 import TenantAccountClient from "./tenant-account-client";
 
 export default async function TenantAccountPage() {
-  const units = await getUnits();
+  const occupancy = await getCurrentOccupancy("tenant");
+  if (!occupancy) redirect("/login");
 
-  const tenantUnit = units.find((u: any) => u.label === "A-04");
-  const tenantName = tenantUnit?.tenant || "Ahmed Noor";
+  const tenantName = occupancy.personName;
   const initials = tenantName
     .split(" ")
     .map((n: string) => n[0])
@@ -17,7 +18,7 @@ export default async function TenantAccountPage() {
     <TenantAccountClient
       name={tenantName}
       initials={initials}
-      unitLabel={tenantUnit?.label || "A-04"}
+      unitLabel={occupancy.unitLabel}
     />
   );
 }

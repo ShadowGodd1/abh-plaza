@@ -5,7 +5,7 @@ import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import StatusBadge from "@/components/ui/status-badge";
-import { normalizeKenyanPhone } from "@/lib/utils";
+import { normalizeKenyanPhone, formatCurrency } from "@/lib/utils";
 
 type PaymentStep = "select" | "confirm" | "processing" | "check_phone" | "success" | "failed";
 
@@ -27,9 +27,10 @@ interface Payment {
 interface TenantPaymentsClientProps {
   invoices: Invoice[];
   recentPayments: Payment[];
+  unitLabel?: string;
 }
 
-export default function TenantPaymentsClient({ invoices, recentPayments }: TenantPaymentsClientProps) {
+export default function TenantPaymentsClient({ invoices, recentPayments, unitLabel }: TenantPaymentsClientProps) {
   const [step, setStep] = useState<PaymentStep>("select");
   const [selectedInvoice, setSelectedInvoice] = useState<number | null>(null);
   const [phone, setPhone] = useState("");
@@ -63,7 +64,7 @@ export default function TenantPaymentsClient({ invoices, recentPayments }: Tenan
           <h2 className="text-xl font-semibold text-text-primary mb-2">Payment received</h2>
           <p className="text-sm text-text-3 mb-1">Receipt: QHK4X7B2RT</p>
           <p className="text-sm text-text-3 mb-6">
-            {selectedInvoice !== null && invoices[selectedInvoice].amount.toLocaleString("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 })} has been applied to your invoice.
+            {selectedInvoice !== null && formatCurrency(invoices[selectedInvoice].amount)} has been applied to your invoice.
           </p>
           <Button onClick={() => { setStep("select"); setSelectedInvoice(null); }} variant="secondary">
             Back to Payments
@@ -119,7 +120,7 @@ export default function TenantPaymentsClient({ invoices, recentPayments }: Tenan
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-text-3">Amount</span>
-                <span className="text-text-primary font-semibold font-tabular text-lg">{invoice.amount.toLocaleString("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 })}</span>
+                <span className="text-text-primary font-semibold font-tabular text-lg">{formatCurrency(invoice.amount)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-text-3">Due Date</span>
@@ -169,7 +170,7 @@ export default function TenantPaymentsClient({ invoices, recentPayments }: Tenan
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-lg font-semibold text-text-primary font-tabular">{inv.amount.toLocaleString("en-KE", { style: "currency", currency: "KES", minimumFractionDigits: 0 })}</p>
+                <p className="text-lg font-semibold text-text-primary font-tabular">{formatCurrency(inv.amount)}</p>
                 <p className="text-xs text-text-3">Due {inv.dueDateFormatted}</p>
               </div>
               <Button size="sm" onClick={() => handlePayNow(i)}>

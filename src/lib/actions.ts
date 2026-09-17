@@ -13,6 +13,13 @@ function isSupabaseConfigured(): boolean {
   );
 }
 
+function requireRole(user: any, ...roles: string[]) {
+  const userRole = user?.user_metadata?.role || user?.app_metadata?.role;
+  if (!roles.includes(userRole)) {
+    throw new Error("Unauthorized: insufficient permissions");
+  }
+}
+
 // ============================================================
 // PAYMENT ACTIONS
 // ============================================================
@@ -24,48 +31,53 @@ export async function recordManualPayment(invoiceId: string, amount: number, met
     return { success: true, payment_id: "demo-payment-" + Date.now(), message: "Payment recorded (demo mode)" };
   }
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin", "caretaker");
 
-  const { data: invoice } = await supabase
-    .from("invoices")
-    .select("id, amount_due, amount_paid, status, invoice_number, occupancy_id")
-    .eq("id", invoiceId)
-    .single();
+    const { data: invoice } = await supabase
+      .from("invoices")
+      .select("id, amount_due, amount_paid, status, invoice_number, occupancy_id")
+      .eq("id", invoiceId)
+      .single();
 
-  if (!invoice) return { error: "Invoice not found" };
-  if (invoice.status === "paid") return { error: "Invoice is already fully paid" };
-  if (invoice.status === "void") return { error: "Cannot pay a void invoice" };
+    if (!invoice) return { error: "Invoice not found" };
+    if (invoice.status === "paid") return { error: "Invoice is already fully paid" };
+    if (invoice.status === "void") return { error: "Cannot pay a void invoice" };
 
-  const remaining = invoice.amount_due - invoice.amount_paid;
-  if (amount > remaining) {
-    // Overpayment: record full remaining, credit excess
+    const remaining = invoice.amount_due - invoice.amount_paid;
+    if (amount > remaining) {
+      const { error } = await supabase.rpc("record_payment", {
+        p_invoice_id: invoiceId,
+        p_amount: remaining,
+        p_method: method,
+        p_recorded_by: user.id,
+        p_notes: notes || `Overpayment by ${amount - remaining} cents`,
+      });
+      if (error) return { error: error.message };
+      return { success: true, message: `Payment of ${remaining} recorded. Excess of ${amount - remaining} credited.` };
+    }
+
     const { error } = await supabase.rpc("record_payment", {
       p_invoice_id: invoiceId,
-      p_amount: remaining,
+      p_amount: amount,
       p_method: method,
       p_recorded_by: user.id,
-      p_notes: notes || `Overpayment by ${amount - remaining} cents`,
+      p_notes: notes,
     });
     if (error) return { error: error.message };
-    return { success: true, message: `Payment of ${remaining} recorded. Excess of ${amount - remaining} credited.` };
+
+    revalidatePath("/billing/invoices");
+    revalidatePath("/billing/payments");
+    revalidatePath("/ledger");
+    revalidatePath("/dashboard");
+    return { success: true, message: "Payment recorded successfully" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
   }
-
-  const { error } = await supabase.rpc("record_payment", {
-    p_invoice_id: invoiceId,
-    p_amount: amount,
-    p_method: method,
-    p_recorded_by: user.id,
-    p_notes: notes,
-  });
-  if (error) return { error: error.message };
-
-  revalidatePath("/billing/invoices");
-  revalidatePath("/billing/payments");
-  revalidatePath("/ledger");
-  revalidatePath("/dashboard");
-  return { success: true, message: "Payment recorded successfully" };
 }
 
 export async function initiateMpesaStkPush(invoiceId: string, phoneNumber: string) {
@@ -80,10 +92,24 @@ export async function initiateMpesaStkPush(invoiceId: string, phoneNumber: strin
     return { success: true, payment_id: "demo-stk-" + Date.now(), message: "STK push sent (demo mode)" };
   }
 
+  const supabase = await createClient();
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("amount_due, amount_paid")
+    .eq("id", invoiceId)
+    .single();
+
+  if (!invoice) {
+    return { success: false, error: "Invoice not found" };
+  }
+
+  const remaining = invoice.amount_due - (invoice.amount_paid || 0);
+  const amount = Math.max(remaining, 0);
+
   const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/mpesa/stk`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ invoice_id: invoiceId, phone_number: normalized, amount: 0 }),
+    body: JSON.stringify({ invoice_id: invoiceId, phone_number: normalized, amount }),
   });
 
   const data = await response.json();
@@ -134,11 +160,20 @@ export async function voidInvoice(invoiceId: string) {
   if (!isSupabaseConfigured()) {
     return { success: true, message: "Invoice voided (demo mode)" };
   }
-  const supabase = await createClient();
-  const { error } = await supabase.from("invoices").update({ status: "void" }).eq("id", invoiceId);
-  if (error) return { error: error.message };
-  revalidatePath("/billing/invoices");
-  return { success: true, message: "Invoice voided" };
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin");
+
+    const { error } = await supabase.from("invoices").update({ status: "void" }).eq("id", invoiceId);
+    if (error) return { error: error.message };
+    revalidatePath("/billing/invoices");
+    return { success: true, message: "Invoice voided" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
+  }
 }
 
 // ============================================================
@@ -155,21 +190,30 @@ export async function createUnit(formData: FormData) {
     return { success: true, unit_id: "demo-unit-" + Date.now(), message: "Unit created (demo mode)" };
   }
 
-  const supabase = await createClient();
-  const { data: prop } = await supabase.from("properties").select("id").limit(1).single();
-  if (!prop) return { error: "No property found" };
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin");
 
-  const { data, error } = await supabase.from("units").insert({
-    property_id: prop.id,
-    unit_type_id: unitTypeId,
-    label,
-    floor,
-    status: "vacant",
-  }).select().single();
+    const { data: prop } = await supabase.from("properties").select("id").limit(1).single();
+    if (!prop) return { error: "No property found" };
 
-  if (error) return { error: error.message };
-  revalidatePath("/properties/units");
-  return { success: true, unit_id: data.id, message: "Unit created" };
+    const { data, error } = await supabase.from("units").insert({
+      property_id: prop.id,
+      unit_type_id: unitTypeId,
+      label,
+      floor,
+      status: "vacant",
+    }).select().single();
+
+    if (error) return { error: error.message };
+    revalidatePath("/properties/units");
+    return { success: true, unit_id: data.id, message: "Unit created" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
+  }
 }
 
 export async function updateUnitStatus(unitId: string, status: string) {
@@ -179,11 +223,20 @@ export async function updateUnitStatus(unitId: string, status: string) {
   if (!isSupabaseConfigured()) {
     return { success: true, message: "Unit updated (demo mode)" };
   }
-  const supabase = await createClient();
-  const { error } = await supabase.from("units").update({ status }).eq("id", unitId);
-  if (error) return { error: error.message };
-  revalidatePath("/properties/units");
-  return { success: true, message: "Unit status updated" };
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin");
+
+    const { error } = await supabase.from("units").update({ status }).eq("id", unitId);
+    if (error) return { error: error.message };
+    revalidatePath("/properties/units");
+    return { success: true, message: "Unit status updated" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
+  }
 }
 
 // ============================================================
@@ -205,8 +258,13 @@ export async function createOccupancy(formData: FormData) {
     return { success: true, message: "Occupancy created (demo mode)" };
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.from("occupancies").insert({
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin");
+
+    const { data, error } = await supabase.from("occupancies").insert({
     unit_id: unitId,
     person_id: personId,
     type,
@@ -246,6 +304,10 @@ export async function createOccupancy(formData: FormData) {
   revalidatePath("/properties/occupancies");
   revalidatePath("/properties/units");
   return { success: true, message: "Occupancy created" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
+  }
 }
 
 export async function endOccupancy(occupancyId: string, endDate: string) {
@@ -253,24 +315,33 @@ export async function endOccupancy(occupancyId: string, endDate: string) {
     return { success: true, message: "Occupancy ended (demo mode)" };
   }
 
-  const supabase = await createClient();
-  const { data: occ } = await supabase.from("occupancies").select("unit_id").eq("id", occupancyId).single();
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin");
 
-  const { error } = await supabase
-    .from("occupancies")
-    .update({ status: "ended", end_date: endDate })
-    .eq("id", occupancyId);
+    const { data: occ } = await supabase.from("occupancies").select("unit_id").eq("id", occupancyId).single();
 
-  if (error) return { error: error.message };
+    const { error } = await supabase
+      .from("occupancies")
+      .update({ status: "ended", end_date: endDate })
+      .eq("id", occupancyId);
 
-  if (occ) {
-    await supabase.from("leases").update({ status: "terminated" }).eq("occupancy_id", occupancyId);
-    await supabase.from("units").update({ status: "vacant" }).eq("id", occ.unit_id);
+    if (error) return { error: error.message };
+
+    if (occ) {
+      await supabase.from("leases").update({ status: "terminated" }).eq("occupancy_id", occupancyId);
+      await supabase.from("units").update({ status: "vacant" }).eq("id", occ.unit_id);
+    }
+
+    revalidatePath("/properties/occupancies");
+    revalidatePath("/properties/units");
+    return { success: true, message: "Occupancy ended" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
   }
-
-  revalidatePath("/properties/occupancies");
-  revalidatePath("/properties/units");
-  return { success: true, message: "Occupancy ended" };
 }
 
 // ============================================================
@@ -308,26 +379,35 @@ export async function updateMaintenanceStatus(requestId: string, status: string,
     return { success: true, message: "Request updated (demo mode)" };
   }
 
-  const supabase = await createClient();
-  const updateData: Record<string, unknown> = { status };
-  if (resolutionNotes) updateData.resolution_notes = resolutionNotes;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin", "caretaker");
 
-  if (status === "resolved" && cost && cost > 0) {
-    const ledgerId = await supabase.rpc("write_ledger_entry", {
-      p_organization_id: (await supabase.from("properties").select("organization_id").limit(1).single()).data?.organization_id,
-      p_type: "expense",
-      p_category: "maintenance",
-      p_amount: cost,
-      p_description: `Maintenance cost — request ${requestId}`,
-    });
-    updateData.cost = cost;
-    updateData.ledger_entry_id = ledgerId.data;
+    const updateData: Record<string, unknown> = { status };
+    if (resolutionNotes) updateData.resolution_notes = resolutionNotes;
+
+    if (status === "resolved" && cost && cost > 0) {
+      const ledgerId = await supabase.rpc("write_ledger_entry", {
+        p_organization_id: (await supabase.from("properties").select("organization_id").limit(1).single()).data?.organization_id,
+        p_type: "expense",
+        p_category: "maintenance",
+        p_amount: cost,
+        p_description: `Maintenance cost — request ${requestId}`,
+      });
+      updateData.cost = cost;
+      updateData.ledger_entry_id = ledgerId.data;
+    }
+
+    const { error } = await supabase.from("maintenance_requests").update(updateData).eq("id", requestId);
+    if (error) return { error: error.message };
+    revalidatePath("/maintenance");
+    return { success: true, message: "Request updated" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
   }
-
-  const { error } = await supabase.from("maintenance_requests").update(updateData).eq("id", requestId);
-  if (error) return { error: error.message };
-  revalidatePath("/maintenance");
-  return { success: true, message: "Request updated" };
 }
 
 // ============================================================
@@ -340,17 +420,26 @@ export async function recordPayrollPaymentAction(staffVendorId: string, amount: 
     return { success: true, message: "Payroll payment recorded (demo mode)" };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("record_payroll_payment", {
-    p_staff_vendor_id: staffVendorId,
-    p_amount: amount,
-    p_notes: notes || null,
-  });
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin");
 
-  if (error) return { error: error.message };
-  revalidatePath("/staff");
-  revalidatePath("/ledger");
-  return { success: true, message: "Payroll payment recorded" };
+    const { error } = await supabase.rpc("record_payroll_payment", {
+      p_staff_vendor_id: staffVendorId,
+      p_amount: amount,
+      p_notes: notes || null,
+    });
+
+    if (error) return { error: error.message };
+    revalidatePath("/staff");
+    revalidatePath("/ledger");
+    return { success: true, message: "Payroll payment recorded" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
+  }
 }
 
 // ============================================================
@@ -369,21 +458,30 @@ export async function createStaffVendor(formData: FormData) {
     return { success: true, message: "Staff added (demo mode)" };
   }
 
-  const supabase = await createClient();
-  const { data: prop } = await supabase.from("properties").select("organization_id").limit(1).single();
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin");
 
-  const { error } = await supabase.from("staff_vendors").insert({
-    organization_id: prop?.organization_id,
-    name,
-    role,
-    phone: phone || null,
-    payment_schedule: schedule || null,
-    amount: amount ? parseInt(amount, 10) : null,
-  });
+    const { data: prop } = await supabase.from("properties").select("organization_id").limit(1).single();
 
-  if (error) return { error: error.message };
-  revalidatePath("/staff");
-  return { success: true, message: "Staff added" };
+    const { error } = await supabase.from("staff_vendors").insert({
+      organization_id: prop?.organization_id,
+      name,
+      role,
+      phone: phone || null,
+      payment_schedule: schedule || null,
+      amount: amount ? parseInt(amount, 10) : null,
+    });
+
+    if (error) return { error: error.message };
+    revalidatePath("/staff");
+    return { success: true, message: "Staff added" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
+  }
 }
 
 // ============================================================
@@ -396,22 +494,28 @@ export async function sendMessage(recipientId: string, body: string) {
     return { success: true, message: "Message sent (demo mode)" };
   }
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin", "caretaker", "tenant", "owner");
 
-  const threadId = crypto.randomUUID();
-  const { error } = await supabase.from("messages").insert({
-    thread_id: threadId,
-    sender_id: user.id,
-    recipient_id: recipientId,
-    body: body.trim(),
-    channel: "in_app",
-  });
+    const threadId = crypto.randomUUID();
+    const { error } = await supabase.from("messages").insert({
+      thread_id: threadId,
+      sender_id: user.id,
+      recipient_id: recipientId,
+      body: body.trim(),
+      channel: "in_app",
+    });
 
-  if (error) return { error: error.message };
-  revalidatePath("/messages");
-  return { success: true, message: "Message sent" };
+    if (error) return { error: error.message };
+    revalidatePath("/messages");
+    return { success: true, message: "Message sent" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
+  }
 }
 
 // ============================================================
@@ -428,20 +532,29 @@ export async function createAnnouncement(formData: FormData) {
     return { success: true, message: "Announcement sent (demo mode)" };
   }
 
-  const supabase = await createClient();
-  const { data: prop } = await supabase.from("properties").select("organization_id").limit(1).single();
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin");
 
-  const { error } = await supabase.from("announcements").insert({
-    organization_id: prop?.organization_id,
-    title,
-    body,
-    sent_to_all: audience === "all",
-    sent_at: new Date().toISOString(),
-  });
+    const { data: prop } = await supabase.from("properties").select("organization_id").limit(1).single();
 
-  if (error) return { error: error.message };
-  revalidatePath("/announcements");
-  return { success: true, message: "Announcement sent" };
+    const { error } = await supabase.from("announcements").insert({
+      organization_id: prop?.organization_id,
+      title,
+      body,
+      sent_to_all: audience === "all",
+      sent_at: new Date().toISOString(),
+    });
+
+    if (error) return { error: error.message };
+    revalidatePath("/announcements");
+    return { success: true, message: "Announcement sent" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
+  }
 }
 
 // ============================================================
@@ -458,23 +571,32 @@ export async function createApplicant(formData: FormData) {
     return { success: true, message: "Applicant added (demo mode)" };
   }
 
-  const supabase = await createClient();
-  const { data: person } = await supabase.from("people").insert({
-    full_name: name,
-    phone: phone.replace(/[\s\-\(\)]/g, ""),
-  }).select().single();
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin", "caretaker");
 
-  if (!person) return { error: "Failed to create person record" };
+    const { data: person } = await supabase.from("people").insert({
+      full_name: name,
+      phone: phone.replace(/[\s\-\(\)]/g, ""),
+    }).select().single();
 
-  const { error } = await supabase.from("applicants").insert({
-    person_id: person.id,
-    unit_id: unitId || null,
-    status: "inquired",
-  });
+    if (!person) return { error: "Failed to create person record" };
 
-  if (error) return { error: error.message };
-  revalidatePath("/properties/applicants");
-  return { success: true, message: "Applicant added" };
+    const { error } = await supabase.from("applicants").insert({
+      person_id: person.id,
+      unit_id: unitId || null,
+      status: "inquired",
+    });
+
+    if (error) return { error: error.message };
+    revalidatePath("/properties/applicants");
+    return { success: true, message: "Applicant added" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
+  }
 }
 
 export async function updateApplicantStatus(applicantId: string, status: string) {
@@ -484,9 +606,18 @@ export async function updateApplicantStatus(applicantId: string, status: string)
   if (!isSupabaseConfigured()) {
     return { success: true, message: "Applicant updated (demo mode)" };
   }
-  const supabase = await createClient();
-  const { error } = await supabase.from("applicants").update({ status }).eq("id", applicantId);
-  if (error) return { error: error.message };
-  revalidatePath("/properties/applicants");
-  return { success: true, message: "Applicant status updated" };
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin");
+
+    const { error } = await supabase.from("applicants").update({ status }).eq("id", applicantId);
+    if (error) return { error: error.message };
+    revalidatePath("/properties/applicants");
+    return { success: true, message: "Applicant status updated" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
+  }
 }

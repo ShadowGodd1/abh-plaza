@@ -17,6 +17,8 @@ interface Payment {
 
 interface OwnerPaymentsClientProps {
   payments: Payment[];
+  ownerName: string;
+  unitLabel: string;
 }
 
 const invoices = [
@@ -30,7 +32,7 @@ const paymentHistory = [
   { month: "Jul 2026", amount: 500000, receipt: "JKL789MNO", status: "completed" },
 ];
 
-export default function OwnerPaymentsClient({ payments }: OwnerPaymentsClientProps) {
+export default function OwnerPaymentsClient({ payments, ownerName, unitLabel }: OwnerPaymentsClientProps) {
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
       <h1 className="text-xl font-semibold text-text-primary mb-1">Payments</h1>

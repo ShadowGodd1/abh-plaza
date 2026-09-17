@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 
+function verifyWebhookSecret(request: NextRequest): boolean {
+  const webhookSecret = process.env.MPESA_WEBHOOK_SECRET;
+  if (!webhookSecret) return true;
+  const authHeader = request.headers.get("authorization") || request.headers.get("X-M-Pesa-Secret");
+  return authHeader === `Bearer ${webhookSecret}` || authHeader === webhookSecret;
+}
+
 // M-Pesa C2B Validation URL - called by Safaricom before accepting a payment
 export async function POST(request: NextRequest) {
+  if (!verifyWebhookSecret(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     console.log("C2B Validation request:", JSON.stringify(body));

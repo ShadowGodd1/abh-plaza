@@ -1,4 +1,5 @@
-import { getDashboardMetrics } from "@/lib/data";
+import { redirect } from "next/navigation";
+import { getDashboardMetrics, getCurrentOccupancy } from "@/lib/data";
 import OwnerHomeClient from "./owner-home-client";
 
 function getGreeting(): string {
@@ -9,8 +10,11 @@ function getGreeting(): string {
 }
 
 export default async function OwnerHomePage() {
+  const occupancy = await getCurrentOccupancy("owner");
+  if (!occupancy) redirect("/login");
+
   const metrics = await getDashboardMetrics();
   const greeting = getGreeting();
 
-  return <OwnerHomeClient metrics={metrics} greeting={greeting} />;
+  return <OwnerHomeClient metrics={metrics} greeting={greeting} ownerName={occupancy.personName.split(" ")[0]} unitLabel={occupancy.unitLabel} />;
 }

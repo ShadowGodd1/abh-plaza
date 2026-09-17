@@ -1,6 +1,47 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import * as demo from "@/lib/demo-data";
 
+export async function getCurrentOccupancy(role: "tenant" | "owner") {
+  if (!isSupabaseConfigured()) {
+    const unit = demo.DEMO_UNITS.find((u) =>
+      role === "owner" ? u.tenantRole === "owner" : u.tenantRole === "tenant"
+    );
+    if (!unit) return null;
+    return {
+      personName: unit.tenant || "",
+      unitLabel: unit.label,
+      unitId: unit.id,
+    };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: person } = await supabase
+    .from("people")
+    .select("id, full_name")
+    .eq("email", user.email)
+    .single();
+
+  if (!person) return null;
+
+  const { data: occupancy } = await supabase
+    .from("occupancies")
+    .select("id, unit_id, units(label)")
+    .eq("person_id", person.id)
+    .eq("status", "active")
+    .single();
+
+  return {
+    personName: person.full_name,
+    unitLabel: (occupancy as any)?.units?.label || "",
+    unitId: occupancy?.unit_id || "",
+  };
+}
+
 function isSupabaseConfigured(): boolean {
   return !!(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&

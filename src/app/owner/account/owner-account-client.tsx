@@ -2,24 +2,13 @@
 
 import { LogOut, ChevronRight, Shield, Bell, HelpCircle } from "lucide-react";
 
-interface Unit {
-  id: string;
-  label: string;
-  floor: number;
-  status: string;
-  type: string;
-  rent: number;
-  tenant: string | null;
-  tenantPhone: string | null;
-  tenantEmail: string | null;
-  tenantRole: string | null;
-}
-
 interface OwnerAccountClientProps {
-  units: Unit[];
+  name: string;
+  initials: string;
+  unitLabel: string;
 }
 
-export default function OwnerAccountClient({ units }: OwnerAccountClientProps) {
+export default function OwnerAccountClient({ name, initials, unitLabel }: OwnerAccountClientProps) {
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
       <h1 className="text-xl font-semibold text-text-primary mb-6">Account</h1>
@@ -27,11 +16,11 @@ export default function OwnerAccountClient({ units }: OwnerAccountClientProps) {
       <div className="bg-surface rounded-[var(--radius-lg)] border border-border p-5 mb-4">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-gold/10 flex items-center justify-center">
-            <span className="text-gold text-lg font-semibold">IM</span>
+            <span className="text-gold text-lg font-semibold">{initials}</span>
           </div>
           <div>
-            <p className="text-lg font-semibold text-text-primary">Ibrahim Mohamed</p>
-            <p className="text-sm text-text-3">Owner · Unit A-01</p>
+            <p className="text-lg font-semibold text-text-primary">{name}</p>
+            <p className="text-sm text-text-3">Owner · Unit {unitLabel}</p>
           </div>
         </div>
       </div>
