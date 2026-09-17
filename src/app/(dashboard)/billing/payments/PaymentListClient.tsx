@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search } from "lucide-react";
+import { Search, AlertTriangle, RotateCw } from "lucide-react";
 import StatusBadge from "@/components/ui/status-badge";
 import Drawer from "@/components/ui/drawer";
 import MoneyDisplay from "@/components/ui/money-display";
@@ -116,7 +116,16 @@ export default function PaymentListClient({ initialPayments }: { initialPayments
                   <td className="px-4 py-3 text-sm text-text-primary text-right font-tabular">{formatCurrency(payment.amount)}</td>
                   <td className="px-4 py-3 text-sm text-text-2">{methodLabels[payment.method] ?? payment.method}</td>
                   <td className="px-4 py-3 text-sm text-text-3 font-tabular">{getReceipt(payment)}</td>
-                  <td className="px-4 py-3"><StatusBadge status={payment.status} size="sm" /></td>
+                  <td className="px-4 py-3">
+                    {payment.status === "processing" ? (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-warning-bg border border-warning/20">
+                        <AlertTriangle size={12} className="text-warning" />
+                        <span className="text-xs font-medium text-warning">Processing</span>
+                      </div>
+                    ) : (
+                      <StatusBadge status={payment.status} size="sm" />
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -133,7 +142,14 @@ export default function PaymentListClient({ initialPayments }: { initialPayments
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-text-primary font-tabular">{getInvoiceNumber(payment)}</span>
-                <StatusBadge status={payment.status} size="sm" />
+                {payment.status === "processing" ? (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-warning-bg border border-warning/20">
+                    <AlertTriangle size={12} className="text-warning" />
+                    <span className="text-xs font-medium text-warning">Processing</span>
+                  </div>
+                ) : (
+                  <StatusBadge status={payment.status} size="sm" />
+                )}
               </div>
               <p className="text-sm text-text-2">{getTenant(payment)} · {getUnit(payment)}</p>
               <p className="text-sm text-text-2">
@@ -160,7 +176,14 @@ export default function PaymentListClient({ initialPayments }: { initialPayments
         {selected && (
           <div className="space-y-6">
             <div>
-              <StatusBadge status={selected.status} />
+              {selected.status === "processing" ? (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] bg-warning-bg border border-warning/20">
+                  <AlertTriangle size={14} className="text-warning shrink-0" />
+                  <span className="text-sm font-medium text-warning">Payment request timed out. Please try again or check M-Pesa.</span>
+                </div>
+              ) : (
+                <StatusBadge status={selected.status} />
+              )}
             </div>
 
             <div className="space-y-3">

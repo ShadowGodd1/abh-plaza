@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Phone, Mail, User, Home, History, Receipt, CreditCard } from "lucide-react";
+import { Plus, Search, Phone, Mail, User, Home, History, Receipt, CreditCard, MessageSquare, CreditCard as IdCard } from "lucide-react";
 import Button from "@/components/ui/button";
 import StatusBadge from "@/components/ui/status-badge";
 import EmptyState from "@/components/ui/empty-state";
 import Drawer from "@/components/ui/drawer";
 import { formatPhoneDisplay, formatCurrency, formatDate, cn } from "@/lib/utils";
-import { DEMO_UNITS, DEMO_OCCUPANCIES, DEMO_INVOICES, DEMO_PAYMENTS } from "@/lib/demo-data";
+import { DEMO_UNITS, DEMO_OCCUPANCIES, DEMO_INVOICES, DEMO_PAYMENTS, DEMO_MESSAGES } from "@/lib/demo-data";
 
-type PersonDetailTab = "profile" | "history" | "invoices" | "payments";
+type PersonDetailTab = "profile" | "history" | "invoices" | "payments" | "messages";
 
 type Person = {
   id: string;
@@ -22,9 +22,20 @@ type Person = {
   role: string;
   status: string;
   rent: number;
+  idNumber: string;
 };
 
 function buildPeople(): Person[] {
+  const idNumbers: Record<string, string> = {
+    "Ibrahim Mohamed": "34567890",
+    "Sara Ali": "45678901",
+    "Ahmed Noor": "56789012",
+    "Omar Hassan": "67890123",
+    "Amina Osman": "78901234",
+    "Hassan Ali": "89012345",
+    "Fatima Khan": "90123456",
+    "John Kamau": "12345678",
+  };
   return DEMO_UNITS.filter((u) => u.tenant).map((u) => ({
     id: u.id,
     name: u.tenant!,
@@ -35,6 +46,7 @@ function buildPeople(): Person[] {
     role: u.tenantRole === "owner" ? "Owner" : "Tenant",
     status: "active",
     rent: u.rent,
+    idNumber: idNumbers[u.tenant!] || "00000000",
   }));
 }
 
@@ -176,6 +188,7 @@ const PERSON_TABS: { key: PersonDetailTab; label: string; icon: typeof User }[] 
   { key: "history", label: "History", icon: History },
   { key: "invoices", label: "Invoices", icon: Receipt },
   { key: "payments", label: "Payments", icon: CreditCard },
+  { key: "messages", label: "Messages", icon: MessageSquare },
 ];
 
 function PersonDetailTabs({
@@ -245,6 +258,10 @@ function PersonDetailTabs({
                   <span className="text-text-primary font-medium">{person.email}</span>
                 </div>
               )}
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3 flex items-center gap-2"><IdCard size={14} /> National ID</span>
+                <span className="text-text-primary font-medium font-tabular">{person.idNumber}</span>
+              </div>
             </div>
           </div>
 
@@ -290,39 +307,62 @@ function PersonDetailTabs({
             <p className="text-sm text-text-3">No occupancy records found.</p>
           ) : (
             <div className="space-y-3">
-              {occupancies.map((occ) => {
+              {occupancies.filter((o) => o.status === "active").map((occ) => {
                 const unit = DEMO_UNITS.find((u) => u.id === occ.unitId);
                 return (
                   <div
                     key={occ.id}
-                    className={cn(
-                      "rounded-[var(--radius-md)] p-3 border",
-                      occ.status === "active"
-                        ? "bg-success-bg/30 border-success/20"
-                        : "bg-surface-2/50 border-border"
-                    )}
+                    className="rounded-[var(--radius-md)] p-3 border bg-success-bg/30 border-success/20"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Home size={14} className={occ.status === "active" ? "text-success" : "text-text-3"} />
+                        <Home size={14} className="text-success" />
                         <span className="text-sm font-medium text-text-primary">
                           {occ.type === "ownership" ? "Owner" : "Tenant"} — Unit {unit?.label || occ.unitId}
                         </span>
                       </div>
-                      <StatusBadge status={occ.status} size="sm" />
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-success/10 text-success">
+                        Current
+                      </span>
                     </div>
                     <p className="text-xs text-text-3 mt-1">
-                      {formatDate(occ.startDate)} — {occ.endDate ? formatDate(occ.endDate) : "Present"}
+                      {formatDate(occ.startDate)} — Present
                     </p>
-                    {!occ.endDate && occ.status === "active" && (
-                      <p className="text-xs text-success mt-1">Current</p>
-                    )}
-                    {occ.endDate && occ.status === "ended" && (
-                      <p className="text-xs text-text-3 mt-1">Previous</p>
-                    )}
                   </div>
                 );
               })}
+
+              {occupancies.filter((o) => o.status === "ended").length > 0 && (
+                <div className="pt-2">
+                  <p className="text-[10px] text-text-3 uppercase tracking-wider mb-2 font-medium">Previous</p>
+                  <div className="space-y-2">
+                    {occupancies.filter((o) => o.status === "ended").map((occ) => {
+                      const unit = DEMO_UNITS.find((u) => u.id === occ.unitId);
+                      return (
+                        <div
+                          key={occ.id}
+                          className="rounded-[var(--radius-md)] p-3 border bg-surface-2/50 border-border"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Home size={14} className="text-text-3" />
+                              <span className="text-sm font-medium text-text-primary">
+                                {occ.type === ("ownership" as string) ? "Owner" : "Tenant"} — Unit {unit?.label || occ.unitId}
+                              </span>
+                            </div>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface-2 text-text-3">
+                              Previous
+                            </span>
+                          </div>
+                          <p className="text-xs text-text-3 mt-1">
+                            {formatDate(occ.startDate)} — {occ.endDate ? formatDate(occ.endDate) : "Present"}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -383,6 +423,46 @@ function PersonDetailTabs({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {tab === "messages" && (
+        <div className="space-y-4">
+          <h4 className="text-xs font-medium text-text-3 uppercase tracking-wider">Message History</h4>
+          {(() => {
+            const thread = DEMO_MESSAGES.find((m) => m.person === person.name);
+            if (!thread) {
+              return <p className="text-sm text-text-3">No messages found for this person.</p>;
+            }
+            return (
+              <div className="space-y-3">
+                {thread.messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      "rounded-[var(--radius-md)] p-3 border",
+                      msg.sender === "admin"
+                        ? "bg-gold/5 border-gold/20 ml-6"
+                        : "bg-surface-2/50 border-border mr-6"
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-text-3 capitalize">
+                        {msg.sender === "admin" ? "Admin" : person.name.split(" ")[0]}
+                        {msg.isInternal && (
+                          <span className="ml-1.5 inline-flex items-center gap-1 text-[10px] text-warning">
+                            Internal
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-[10px] text-text-3">{formatDate(msg.time)}</span>
+                    </div>
+                    <p className="text-sm text-text-primary">{msg.body}</p>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

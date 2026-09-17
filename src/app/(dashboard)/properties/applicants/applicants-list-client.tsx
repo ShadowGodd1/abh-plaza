@@ -1,13 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Search, CheckCircle, XCircle, FileText, Clock } from "lucide-react";
 import Button from "@/components/ui/button";
 import StatusBadge from "@/components/ui/status-badge";
 import Drawer from "@/components/ui/drawer";
 import EmptyState from "@/components/ui/empty-state";
 import Modal from "@/components/ui/modal";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
+
+const PIPELINE_STAGES = [
+  { key: "inquired", label: "Applied" },
+  { key: "viewing", label: "Screening" },
+  { key: "approved", label: "Approved" },
+  { key: "converted", label: "Lease Signed" },
+  { key: "moved_in", label: "Move-in" },
+];
 
 function getName(a: any): string {
   if (typeof a.name === "string") return a.name;
@@ -109,7 +117,8 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
       </div>
 
       <div className="bg-surface rounded-[var(--radius-lg)] border border-border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-surface-2/50">
@@ -137,6 +146,29 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
             </tbody>
           </table>
         </div>
+
+        {/* Mobile cards */}
+        <div className="sm:hidden divide-y divide-border">
+          {filtered.map((applicant) => (
+            <button
+              key={applicant.id}
+              className="w-full p-4 text-left space-y-2 hover:bg-surface-2/30 transition-colors"
+              onClick={() => setSelected(applicant)}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm font-medium text-text-primary">{getName(applicant)}</p>
+                  <p className="text-xs text-text-3">{getPhone(applicant)}</p>
+                </div>
+                <StatusBadge status={applicant.status} size="sm" />
+              </div>
+              <div className="flex items-center justify-between text-xs text-text-3">
+                <span>Unit {getUnit(applicant)}</span>
+                <span>{formatDate(applicant.date ?? applicant.created_at)}</span>
+              </div>
+            </button>
+          ))}
+        </div>
         {filtered.length === 0 && (
           <EmptyState
             title="No applicants found"
@@ -155,6 +187,55 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
           <div className="space-y-6">
             <div>
               <StatusBadge status={selected.status} />
+            </div>
+
+            {/* Pipeline Visualization */}
+            <div className="space-y-3">
+              <p className="text-xs font-medium text-text-3 uppercase tracking-wider">Pipeline Stage</p>
+              <div className="flex items-center gap-1">
+                {PIPELINE_STAGES.map((stage, i) => {
+                  const statusOrder = ["inquired", "viewing", "approved", "rejected", "converted"];
+                  const currentIdx = statusOrder.indexOf(selected.status);
+                  const stageIdx = statusOrder.indexOf(stage.key);
+                  const isActive = stage.key === selected.status;
+                  const isCompleted = currentIdx >= 0 && stageIdx >= 0 && stageIdx < currentIdx;
+                  const isRejected = selected.status === "rejected";
+
+                  return (
+                    <div key={stage.key} className="flex items-center">
+                      <div className={cn(
+                        "flex flex-col items-center gap-1",
+                        i < PIPELINE_STAGES.length - 1 && "flex-1"
+                      )}>
+                        <div className={cn(
+                          "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium border-2 transition-colors shrink-0",
+                          isActive
+                            ? "bg-gold border-gold text-ink"
+                            : isCompleted
+                              ? "bg-success border-success text-white"
+                              : isRejected
+                                ? "bg-danger/10 border-danger/30 text-danger"
+                                : "bg-surface-2 border-border text-text-3"
+                        )}>
+                          {isCompleted ? <CheckCircle size={12} /> : i + 1}
+                        </div>
+                        <span className={cn(
+                          "text-[10px] font-medium whitespace-nowrap",
+                          isActive ? "text-gold" : isCompleted ? "text-success" : "text-text-3"
+                        )}>
+                          {stage.label}
+                        </span>
+                      </div>
+                      {i < PIPELINE_STAGES.length - 1 && (
+                        <div className={cn(
+                          "h-0.5 flex-1 mx-1 mt-[-14px] rounded-full",
+                          isCompleted ? "bg-success" : "bg-border"
+                        )} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -176,7 +257,98 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
               </div>
             </div>
 
-            <div className="border-t border-border pt-4">
+            {/* Notes Section */}
+            <div className="border-t border-border pt-4 space-y-3">
+              <h4 className="text-xs font-medium text-text-3 uppercase tracking-wider flex items-center gap-1.5">
+                <FileText size={12} />
+                Notes
+              </h4>
+              <div className="bg-surface-2/50 rounded-[var(--radius-md)] p-3 space-y-2">
+                <div className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-gold mt-1.5 shrink-0" />
+                  <div>
+                    <p className="text-sm text-text-primary">Initial inquiry received. Interested in the unit for immediate occupancy.</p>
+                    <p className="text-[10px] text-text-3 mt-0.5">{formatDate(selected.date ?? selected.created_at)} · Admin</p>
+                  </div>
+                </div>
+                {selected.status === "viewing" && (
+                  <div className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-info mt-1.5 shrink-0" />
+                    <div>
+                      <p className="text-sm text-text-primary">Scheduled for unit viewing. Awaiting confirmation from applicant.</p>
+                      <p className="text-[10px] text-text-3 mt-0.5">Sep 14, 2026 · Admin</p>
+                    </div>
+                  </div>
+                )}
+                {selected.status === "approved" && (
+                  <div className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-success mt-1.5 shrink-0" />
+                    <div>
+                      <p className="text-sm text-text-primary">Application approved. Ready for lease signing.</p>
+                      <p className="text-[10px] text-text-3 mt-0.5">Sep 15, 2026 · Admin</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <button className="text-xs font-medium text-gold hover:text-gold-dark transition-colors">
+                + Add Note
+              </button>
+            </div>
+
+            {/* Activity Log */}
+            <div className="border-t border-border pt-4 space-y-3">
+              <h4 className="text-xs font-medium text-text-3 uppercase tracking-wider flex items-center gap-1.5">
+                <Clock size={12} />
+                Activity Log
+              </h4>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 rounded-full bg-text-3 mt-1.5 shrink-0" />
+                  <div>
+                    <p className="text-sm text-text-primary">Application created</p>
+                    <p className="text-xs text-text-3 mt-0.5">{formatDate(selected.date ?? selected.created_at)} · 10:00 AM</p>
+                  </div>
+                </div>
+                {selected.status !== "inquired" && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full bg-gold mt-1.5 shrink-0" />
+                    <div>
+                      <p className="text-sm text-text-primary">Status changed to <span className="font-medium">Screening</span></p>
+                      <p className="text-xs text-text-3 mt-0.5">Sep 13, 2026 · 2:30 PM</p>
+                    </div>
+                  </div>
+                )}
+                {(selected.status === "approved" || selected.status === "converted") && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full bg-success mt-1.5 shrink-0" />
+                    <div>
+                      <p className="text-sm text-text-primary">Status changed to <span className="font-medium">Approved</span></p>
+                      <p className="text-xs text-text-3 mt-0.5">Sep 15, 2026 · 11:00 AM</p>
+                    </div>
+                  </div>
+                )}
+                {selected.status === "rejected" && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full bg-danger mt-1.5 shrink-0" />
+                    <div>
+                      <p className="text-sm text-text-primary">Status changed to <span className="font-medium">Rejected</span></p>
+                      <p className="text-xs text-text-3 mt-0.5">Sep 14, 2026 · 4:00 PM</p>
+                    </div>
+                  </div>
+                )}
+                {selected.status === "converted" && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-2 h-2 rounded-full bg-info mt-1.5 shrink-0" />
+                    <div>
+                      <p className="text-sm text-text-primary">Lease signed. Applicant converted to tenant.</p>
+                      <p className="text-xs text-text-3 mt-0.5">Sep 16, 2026 · 9:00 AM</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-4 sticky bottom-0 bg-surface pb-6">
               <p className="text-xs text-text-3 uppercase tracking-wider mb-3">Actions</p>
               <div className="flex gap-2">
                 {selected.status !== "approved" && selected.status !== "rejected" && selected.status !== "converted" && (

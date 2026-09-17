@@ -35,17 +35,16 @@ export default function Drawer({ open, onClose, title, description, children, si
   return (
     <div ref={overlayRef} className="fixed inset-0 z-50 flex justify-end">
       <div
-        className="fixed inset-0 bg-ink/40 animate-in fade-in duration-200"
+        className="fixed inset-0 bg-ink/40 drawer-overlay-animate"
         onClick={onClose}
       />
       <div
         className={cn(
-          "relative z-10 h-full bg-surface shadow-[var(--shadow-drawer)]",
-          "animate-in slide-in-from-right duration-240",
+          "relative z-10 h-full bg-surface shadow-[var(--shadow-drawer)] drawer-panel-animate",
           {
-            "w-full max-w-sm": size === "sm",
-            "w-full max-w-md": size === "md",
-            "w-full max-w-lg": size === "lg",
+            "w-full md:w-[400px] md:max-w-[400px]": size === "sm",
+            "w-full md:w-[440px] md:max-w-[480px]": size === "md",
+            "w-full md:w-[480px] md:max-w-[560px]": size === "lg",
           },
           className
         )}

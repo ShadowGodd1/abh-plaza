@@ -209,12 +209,15 @@ export default function Sidebar({ role, user }: SidebarProps) {
                           key={child.href}
                           href={child.href}
                           className={cn(
-                            "block px-3 py-1.5 rounded-[var(--radius-sm)] text-sm transition-colors duration-150",
+                            "relative block px-3 py-1.5 rounded-[var(--radius-sm)] text-sm transition-colors duration-150",
                             childActive
                               ? "bg-gold/10 text-gold"
                               : "text-white/50 hover:text-white hover:bg-white/5"
                           )}
                         >
+                          {childActive && (
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-gold rounded-r" />
+                          )}
                           {child.label}
                         </Link>
                       );
@@ -230,13 +233,16 @@ export default function Sidebar({ role, user }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] text-sm",
+                "relative flex items-center gap-3 px-3 py-2 rounded-[var(--radius-md)] text-sm",
                 "transition-colors duration-150",
                 isActive
                   ? "bg-gold/10 text-gold"
                   : "text-white/60 hover:text-white hover:bg-white/5"
               )}
             >
+              {isActive && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-gold rounded-r" />
+              )}
               <span className="flex-shrink-0">{item.icon}</span>
               {!collapsed && <span>{item.label}</span>}
             </Link>

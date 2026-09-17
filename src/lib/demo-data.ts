@@ -67,6 +67,7 @@ export const DEMO_PAYMENTS = [
   { id: "pay-4", invoiceNumber: "INV-2026-0003", tenant: "Omar Hassan", unit: "B-01", amount: 600000, method: "mpesa_c2b", receipt: "RST7Y2K9AB", date: "2026-09-10", status: "completed" },
   { id: "pay-5", invoiceNumber: "INV-2026-0008", tenant: "John Kamau", unit: "C-04", amount: 2800000, method: "mpesa_stk", receipt: "DEF456GHI", date: "2026-09-05", status: "completed" },
   { id: "pay-6", invoiceNumber: "INV-2026-0009", tenant: "Ibrahim Mohamed", unit: "A-01", amount: 500000, method: "bank", receipt: "BNK789JKL", date: "2026-09-30", status: "completed" },
+  { id: "pay-7", invoiceNumber: "INV-2026-0005", tenant: "Amina Osman", unit: "B-03", amount: 4000000, method: "mpesa_stk", receipt: null, date: "2026-09-16", status: "processing" },
 ];
 
 export const DEMO_LEDGER = [
@@ -110,39 +111,39 @@ export const DEMO_MESSAGES = [
   {
     id: "t-1", person: "Ahmed Noor", unit: "A-04", lastMessage: "Thank you for the update on the maintenance request.", time: "2026-09-14T10:30:00", unread: 0,
     messages: [
-      { id: "m1", sender: "admin", body: "Hello Ahmed, your maintenance request for the leaking faucet has been logged. Our team will review it shortly.", time: "2026-09-14T09:00:00", isInternal: false },
-      { id: "m2", sender: "admin", body: "Note: Plumber Peter Kamau is available next Tuesday. Schedule for that day.", time: "2026-09-14T09:05:00", isInternal: true },
-      { id: "m3", sender: "tenant", body: "Thank you for the update on the maintenance request.", time: "2026-09-14T10:30:00", isInternal: false },
+      { id: "m1", sender: "admin", body: "Hello Ahmed, your maintenance request for the leaking faucet has been logged. Our team will review it shortly.", time: "2026-09-14T09:00:00", isInternal: false, channel: "in_app" as const },
+      { id: "m2", sender: "admin", body: "Note: Plumber Peter Kamau is available next Tuesday. Schedule for that day.", time: "2026-09-14T09:05:00", isInternal: true, channel: "in_app" as const },
+      { id: "m3", sender: "tenant", body: "Thank you for the update on the maintenance request.", time: "2026-09-14T10:30:00", isInternal: false, channel: "sms" as const },
     ],
   },
   {
     id: "t-2", person: "Sara Ali", unit: "A-02", lastMessage: "When is the next service charge payment due?", time: "2026-09-13T15:45:00", unread: 1,
     messages: [
-      { id: "m1", sender: "tenant", body: "When is the next service charge payment due?", time: "2026-09-13T15:45:00", isInternal: false },
-      { id: "m2", sender: "admin", body: "Internal: Check her payment history before responding. She has been late 2 months in a row.", time: "2026-09-13T16:00:00", isInternal: true },
+      { id: "m1", sender: "tenant", body: "When is the next service charge payment due?", time: "2026-09-13T15:45:00", isInternal: false, channel: "sms" as const },
+      { id: "m2", sender: "admin", body: "Internal: Check her payment history before responding. She has been late 2 months in a row.", time: "2026-09-13T16:00:00", isInternal: true, channel: "in_app" as const },
     ],
   },
   {
     id: "t-3", person: "Omar Hassan", unit: "B-01", lastMessage: "Payment confirmed. Thank you.", time: "2026-09-12T11:20:00", unread: 0,
     messages: [
-      { id: "m1", sender: "admin", body: "Your September invoice has been generated. Please find the details in your portal.", time: "2026-09-10T08:00:00", isInternal: false },
-      { id: "m2", sender: "admin", body: "Note: Omar requested early invoice this month due to travel plans.", time: "2026-09-10T08:05:00", isInternal: true },
-      { id: "m3", sender: "tenant", body: "Payment confirmed. Thank you.", time: "2026-09-12T11:20:00", isInternal: false },
+      { id: "m1", sender: "admin", body: "Your September invoice has been generated. Please find the details in your portal.", time: "2026-09-10T08:00:00", isInternal: false, channel: "in_app" as const },
+      { id: "m2", sender: "admin", body: "Note: Omar requested early invoice this month due to travel plans.", time: "2026-09-10T08:05:00", isInternal: true, channel: "in_app" as const },
+      { id: "m3", sender: "tenant", body: "Payment confirmed. Thank you.", time: "2026-09-12T11:20:00", isInternal: false, channel: "in_app" as const },
     ],
   },
   {
     id: "t-4", person: "Amina Osman", unit: "B-03", lastMessage: "Is there a discount for early payment?", time: "2026-09-11T09:15:00", unread: 0,
     messages: [
-      { id: "m1", sender: "tenant", body: "Is there a discount for early payment?", time: "2026-09-11T09:15:00", isInternal: false },
-      { id: "m2", sender: "admin", body: "Thank you for asking, Amina. Currently there is no early payment discount. The full amount is due by the 20th.", time: "2026-09-11T10:00:00", isInternal: false },
+      { id: "m1", sender: "tenant", body: "Is there a discount for early payment?", time: "2026-09-11T09:15:00", isInternal: false, channel: "sms" as const },
+      { id: "m2", sender: "admin", body: "Thank you for asking, Amina. Currently there is no early payment discount. The full amount is due by the 20th.", time: "2026-09-11T10:00:00", isInternal: false, channel: "sms" as const },
     ],
   },
 ];
 
 export const DEMO_ANNOUNCEMENTS = [
-  { id: "an-1", title: "Water Supply Maintenance", body: "Dear residents, there will be a scheduled water supply interruption on Saturday, 20th September from 8:00 AM to 2:00 PM for maintenance work on the main water line. Please store sufficient water in advance.", sentToAll: true, sentAt: "2026-09-13T09:00:00" },
-  { id: "an-2", title: "Monthly Service Charge Reminder", body: "This is a reminder that September service charges are due by 20th September. Please make payments through M-Pesa or at the management office.", sentToAll: true, sentAt: "2026-09-10T08:00:00" },
-  { id: "an-3", title: "Parking Lot Rules Update", body: "Please be informed that the parking lot rules have been updated. All vehicles must display valid parking stickers. Non-compliant vehicles will be restricted from the premises.", sentToAll: true, sentAt: "2026-09-05T10:00:00" },
+  { id: "an-1", title: "Water Supply Maintenance", body: "Dear residents, there will be a scheduled water supply interruption on Saturday, 20th September from 8:00 AM to 2:00 PM for maintenance work on the main water line. Please store sufficient water in advance.", sentToAll: true, sentAt: "2026-09-13T09:00:00", deliveredTo: 11, pendingDelivery: 0 },
+  { id: "an-2", title: "Monthly Service Charge Reminder", body: "This is a reminder that September service charges are due by 20th September. Please make payments through M-Pesa or at the management office.", sentToAll: true, sentAt: "2026-09-10T08:00:00", deliveredTo: 10, pendingDelivery: 1 },
+  { id: "an-3", title: "Parking Lot Rules Update", body: "Please be informed that the parking lot rules have been updated. All vehicles must display valid parking stickers. Non-compliant vehicles will be restricted from the premises.", sentToAll: true, sentAt: "2026-09-05T10:00:00", deliveredTo: 12, pendingDelivery: 0 },
 ];
 
 // Computed helpers

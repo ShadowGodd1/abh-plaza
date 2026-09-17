@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, AlertTriangle } from "lucide-react";
+import { Phone, AlertTriangle, CreditCard } from "lucide-react";
 import Button from "@/components/ui/button";
 import Drawer from "@/components/ui/drawer";
 import MoneyDisplay from "@/components/ui/money-display";
 import Modal from "@/components/ui/modal";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 
 type StaffMember = {
   id: string;
@@ -21,6 +21,26 @@ type StaffMember = {
   lastPayment: string | null;
 };
 
+type PaymentHistoryEntry = {
+  id: string;
+  staffId: string;
+  date: string;
+  amount: number;
+  method: string;
+  reference: string;
+};
+
+const DEMO_PAYROLL_HISTORY: PaymentHistoryEntry[] = [
+  { id: "ph-1", staffId: "s-1", date: "2026-09-01", amount: 2500000, method: "M-Pesa", reference: "PAY-S1-202609" },
+  { id: "ph-2", staffId: "s-1", date: "2026-08-01", amount: 2500000, method: "M-Pesa", reference: "PAY-S1-202608" },
+  { id: "ph-3", staffId: "s-1", date: "2026-07-01", amount: 2500000, method: "M-Pesa", reference: "PAY-S1-202607" },
+  { id: "ph-4", staffId: "s-2", date: "2026-09-01", amount: 1500000, method: "Bank Transfer", reference: "PAY-S2-202609" },
+  { id: "ph-5", staffId: "s-2", date: "2026-08-01", amount: 1500000, method: "Bank Transfer", reference: "PAY-S2-202608" },
+  { id: "ph-6", staffId: "s-2", date: "2026-07-01", amount: 1500000, method: "Bank Transfer", reference: "PAY-S2-202607" },
+  { id: "ph-7", staffId: "s-3", date: "2026-08-15", amount: 800000, method: "M-Pesa", reference: "PAY-S3-202608" },
+  { id: "ph-8", staffId: "s-4", date: "2026-07-20", amount: 600000, method: "Cash", reference: "PAY-S4-202607" },
+];
+
 interface StaffListClientProps {
   initialStaff: StaffMember[];
 }
@@ -29,6 +49,7 @@ export default function StaffListClient({ initialStaff }: StaffListClientProps) 
   const [selected, setSelected] = useState<StaffMember | null>(null);
   const [payrollLoading, setPayrollLoading] = useState(false);
   const [showPayrollConfirm, setShowPayrollConfirm] = useState(false);
+  const [detailTab, setDetailTab] = useState<"details" | "payments">("details");
 
   const handleRecordPayroll = async () => {
     setPayrollLoading(true);
@@ -40,6 +61,10 @@ export default function StaffListClient({ initialStaff }: StaffListClientProps) 
     }
   };
 
+  const paymentHistory = selected
+    ? DEMO_PAYROLL_HISTORY.filter((p) => p.staffId === selected.id)
+    : [];
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -47,7 +72,7 @@ export default function StaffListClient({ initialStaff }: StaffListClientProps) 
           <div
             key={staff.id}
             className="bg-surface rounded-[var(--radius-lg)] border border-border p-4 hover:shadow-[var(--shadow-card)] transition-shadow cursor-pointer"
-            onClick={() => setSelected(staff)}
+            onClick={() => { setSelected(staff); setDetailTab("details"); }}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
@@ -99,28 +124,69 @@ export default function StaffListClient({ initialStaff }: StaffListClientProps) 
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Phone</p>
-                <p className="text-sm text-text-primary">{selected.phone}</p>
-              </div>
-              <div>
-                <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Payment Schedule</p>
-                <p className="text-sm text-text-primary">{selected.schedule}</p>
-              </div>
-              {selected.amount && (
-                <div>
-                  <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Amount</p>
-                  <MoneyDisplay amount={selected.amount} size="lg" />
-                </div>
-              )}
-              <div>
-                <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Last Payment</p>
-                <p className="text-sm text-text-primary">{selected.lastPayment || "N/A"}</p>
-              </div>
+            {/* Tabs */}
+            <div className="flex gap-1 bg-surface-2 rounded-[var(--radius-md)] p-1">
+              {(["details", "payments"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setDetailTab(tab)}
+                  className={cn(
+                    "flex-1 py-1.5 text-xs font-medium rounded-[var(--radius-sm)] transition-colors",
+                    detailTab === tab
+                      ? "bg-surface text-text-primary shadow-sm"
+                      : "text-text-3 hover:text-text-2"
+                  )}
+                >
+                  {tab === "details" ? "Details" : "Payment History"}
+                </button>
+              ))}
             </div>
 
-            <div className="border-t border-border pt-4">
+            {detailTab === "details" ? (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Phone</p>
+                  <p className="text-sm text-text-primary">{selected.phone}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Payment Schedule</p>
+                  <p className="text-sm text-text-primary">{selected.schedule}</p>
+                </div>
+                {selected.amount && (
+                  <div>
+                    <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Amount</p>
+                    <MoneyDisplay amount={selected.amount} size="lg" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Last Payment</p>
+                  <p className="text-sm text-text-primary">{selected.lastPayment || "N/A"}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {paymentHistory.length > 0 ? (
+                  paymentHistory.map((payment) => (
+                    <div key={payment.id} className="flex items-center justify-between p-3 bg-surface-2 rounded-[var(--radius-md)]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-success/10 flex items-center justify-center">
+                          <CreditCard size={14} className="text-success" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-text-primary">{formatDate(payment.date)}</p>
+                          <p className="text-xs text-text-3">{payment.method} · {payment.reference}</p>
+                        </div>
+                      </div>
+                      <MoneyDisplay amount={payment.amount} />
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-text-3 text-center py-4">No payment history found.</p>
+                )}
+              </div>
+            )}
+
+            <div className="border-t border-border pt-4 sticky bottom-0 bg-surface pb-6">
               <Button
                 className="w-full"
                 loading={payrollLoading}

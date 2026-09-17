@@ -72,6 +72,8 @@ export default async function ReportsPage({
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 text-sm text-text-3 mb-1">
+          <a href="/dashboard" className="hover:text-gold transition-colors">Dashboard</a>
+          <span>/</span>
           <span className="text-text-primary">Reports</span>
         </div>
         <h1 className="text-2xl font-semibold text-text-primary">Reports</h1>

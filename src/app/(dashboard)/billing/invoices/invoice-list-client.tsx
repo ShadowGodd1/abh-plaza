@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Plus, AlertTriangle } from "lucide-react";
+import { Search, Plus, AlertTriangle, FileText, Download, Upload } from "lucide-react";
 import Drawer from "@/components/ui/drawer";
 import Button from "@/components/ui/button";
 import StatusBadge from "@/components/ui/status-badge";
@@ -23,9 +23,28 @@ interface Invoice {
   period: string;
 }
 
+function getPeriodDates(period: string): { start: Date; end: Date } | null {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  if (period === "this_month") {
+    return { start: new Date(year, month, 1), end: new Date(year, month + 1, 0) };
+  }
+  if (period === "last_month") {
+    return { start: new Date(year, month - 1, 1), end: new Date(year, month, 0) };
+  }
+  if (period === "this_quarter") {
+    const quarterStart = Math.floor(month / 3) * 3;
+    return { start: new Date(year, quarterStart, 1), end: new Date(year, quarterStart + 3, 0) };
+  }
+  return null;
+}
+
 export default function InvoiceListClient({ initialInvoices }: { initialInvoices: Invoice[] }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [periodFilter, setPeriodFilter] = useState("all");
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   const filtered = initialInvoices.filter((inv) => {
@@ -34,7 +53,17 @@ export default function InvoiceListClient({ initialInvoices }: { initialInvoices
       inv.tenant.toLowerCase().includes(search.toLowerCase()) ||
       inv.unit.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
-    return matchesSearch && matchesStatus;
+
+    let matchesPeriod = true;
+    if (periodFilter !== "all") {
+      const range = getPeriodDates(periodFilter);
+      if (range) {
+        const due = new Date(inv.dueDate);
+        matchesPeriod = due >= range.start && due <= range.end;
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesPeriod;
   });
 
   return (
@@ -61,6 +90,16 @@ export default function InvoiceListClient({ initialInvoices }: { initialInvoices
           <option value="partial">Partial</option>
           <option value="overdue">Overdue</option>
           <option value="void">Void</option>
+        </select>
+        <select
+          value={periodFilter}
+          onChange={(e) => setPeriodFilter(e.target.value)}
+          className="h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+        >
+          <option value="all">All Periods</option>
+          <option value="this_month">This Month</option>
+          <option value="last_month">Last Month</option>
+          <option value="this_quarter">This Quarter</option>
         </select>
       </div>
 
@@ -276,7 +315,7 @@ function InvoiceDetailDrawer({
           )}
 
           {invoice.status !== "paid" && invoice.status !== "void" && (
-            <div className="border-t border-border pt-4">
+            <div className="border-t border-border pt-4 sticky bottom-0 bg-surface pb-6">
               <Button
                 className="w-full"
                 loading={recordPaymentLoading}
@@ -323,6 +362,29 @@ function InvoiceDetailDrawer({
             )}
           </div>
 
+          {/* Documents */}
+          <div className="border-t border-border pt-4">
+            <h4 className="text-sm font-medium text-text-primary mb-3">Documents</h4>
+            <div className="space-y-2">
+              <div className="flex items-center gap-3 bg-surface-2/50 rounded-[var(--radius-md)] p-3 group">
+                <div className="w-8 h-8 rounded bg-gold/10 flex items-center justify-center flex-shrink-0">
+                  <FileText size={14} className="text-gold" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-text-primary truncate">{invoice.number}.pdf</p>
+                  <p className="text-xs text-text-3">245 KB</p>
+                </div>
+                <button className="text-text-3 hover:text-gold transition-colors opacity-0 group-hover:opacity-100" aria-label="Download document">
+                  <Download size={14} />
+                </button>
+              </div>
+            </div>
+            <button className="mt-2 flex items-center gap-1.5 text-xs font-medium text-gold hover:text-gold-dark transition-colors">
+              <Upload size={12} />
+              Attach File
+            </button>
+          </div>
+
           {/* Audit History */}
           <div className="border-t border-border pt-4">
             <h4 className="text-sm font-medium text-text-primary mb-3">Audit History</h4>
@@ -346,32 +408,92 @@ function InvoiceDetailDrawer({
         open={showPaymentConfirm}
         onClose={() => setShowPaymentConfirm(false)}
         title="Record Payment"
-        size="sm"
+        size="md"
       >
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
-              <AlertTriangle size={20} className="text-gold" />
+        {invoice && (
+          <div className="space-y-4">
+            <div className="bg-surface-2/50 rounded-[var(--radius-md)] p-4 space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Unit</span>
+                <span className="text-text-primary font-medium">{invoice.unit}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Tenant</span>
+                <span className="text-text-primary font-medium">{invoice.tenant}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Invoice</span>
+                <span className="text-text-primary font-medium font-tabular">{invoice.number}</span>
+              </div>
+              <div className="border-t border-border" />
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Invoice Amount</span>
+                <span className="text-text-primary font-medium font-tabular">{formatCurrency(invoice.amount)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Outstanding</span>
+                <span className="text-text-primary font-medium font-tabular">{formatCurrency(invoice.amount - invoice.amountPaid)}</span>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-text-primary">
-                You are about to record a payment for Invoice{" "}
-                <span className="font-medium">{invoice?.number}</span>.
-              </p>
-              <p className="text-sm text-text-3 mt-1">
-                Amount due: <span className="font-medium text-text-primary">{invoice && formatCurrency(invoice.amount - invoice.amountPaid)}</span>
-              </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-text-3 uppercase tracking-wider block mb-1.5">Payment Amount</label>
+                <input
+                  type="text"
+                  defaultValue={formatCurrency(invoice.amount - invoice.amountPaid)}
+                  className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold font-tabular"
+                  readOnly
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-text-3 uppercase tracking-wider block mb-1.5">Method</label>
+                  <select className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold">
+                    <option>M-Pesa STK</option>
+                    <option>M-Pesa C2B</option>
+                    <option>Cash</option>
+                    <option>Bank Transfer</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-text-3 uppercase tracking-wider block mb-1.5">Date</label>
+                  <input
+                    type="text"
+                    defaultValue={new Date().toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                    readOnly
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-text-3 uppercase tracking-wider block mb-1.5">Reference / Transaction ID</label>
+                <input
+                  type="text"
+                  placeholder="e.g. QHK4X7B2RT"
+                  className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-text-3 uppercase tracking-wider block mb-1.5">Notes</label>
+                <textarea
+                  placeholder="Optional notes..."
+                  rows={2}
+                  className="w-full px-3 py-2 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2">
+              <Button variant="secondary" onClick={() => setShowPaymentConfirm(false)}>
+                Cancel
+              </Button>
+              <Button loading={recordPaymentLoading} onClick={handleRecordPayment}>
+                Record Payment
+              </Button>
             </div>
           </div>
-          <div className="flex gap-2 justify-end">
-            <Button variant="secondary" onClick={() => setShowPaymentConfirm(false)}>
-              Cancel
-            </Button>
-            <Button loading={recordPaymentLoading} onClick={handleRecordPayment}>
-              Confirm
-            </Button>
-          </div>
-        </div>
+        )}
       </Modal>
 
       {/* Void Invoice Confirmation */}

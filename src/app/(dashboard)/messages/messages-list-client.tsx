@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Send, Lock } from "lucide-react";
+import { Search, Send, Lock, MessageSquare, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Message = {
@@ -10,6 +10,7 @@ type Message = {
   body: string;
   time: string;
   isInternal?: boolean;
+  channel?: "in_app" | "sms";
 };
 
 type MessageThread = {
@@ -121,12 +122,25 @@ export default function MessagesListClient({ initialMessages }: MessagesListClie
                     )}
                   >
                     <p className="text-sm">{msg.body}</p>
-                    <p className={cn(
-                      "text-[10px] mt-1",
-                      msg.sender === "admin" ? "text-white/50" : "text-text-3"
-                    )}>
-                      {msg.time}
-                    </p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <p className={cn(
+                        "text-[10px]",
+                        msg.sender === "admin" ? "text-white/50" : "text-text-3"
+                      )}>
+                        {msg.time}
+                      </p>
+                      {msg.channel && (
+                        <span className={cn(
+                          "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[var(--radius-sm)] text-[10px] font-medium",
+                          msg.sender === "admin"
+                            ? "bg-white/10 text-white/70"
+                            : "bg-surface border border-border text-text-3"
+                        )}>
+                          {msg.channel === "in_app" ? <MessageSquare size={10} /> : <Phone size={10} />}
+                          {msg.channel === "in_app" ? "In-app" : "SMS"}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })}

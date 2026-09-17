@@ -1,33 +1,78 @@
 "use client";
 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
+
+function formatCurrency(amountInCents: number): string {
+  return new Intl.NumberFormat("en-KE", {
+    style: "currency",
+    currency: "KES",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amountInCents / 100);
+}
+
+function CustomTooltip({ active, payload, label }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-ink text-white px-3 py-2 rounded-[var(--radius-md)] shadow-lg text-sm">
+        <p className="font-medium">{label}</p>
+        <p className="text-gold font-tabular">{formatCurrency(payload[0].value)}</p>
+      </div>
+    );
+  }
+  return null;
+}
+
 export default function DashboardCharts({
   collectionRate,
 }: {
   collectionRate: number;
 }) {
-  const months = ["Apr", "May", "Jun", "Jul", "Aug", "Sep"];
-  const heights = [65, 72, 60, 80, 75, 87];
+  const chartData = [
+    { month: "Apr", revenue: 4500000, isCurrent: false },
+    { month: "May", revenue: 5200000, isCurrent: false },
+    { month: "Jun", revenue: 4800000, isCurrent: false },
+    { month: "Jul", revenue: 5800000, isCurrent: false },
+    { month: "Aug", revenue: 5500000, isCurrent: false },
+    { month: "Sep", revenue: 6200000, isCurrent: true },
+  ];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 bg-surface rounded-[var(--radius-lg)] border border-border p-6">
         <h3 className="text-base font-semibold text-text-primary mb-4">Monthly Revenue</h3>
-        <div className="h-64 flex items-end justify-between gap-2 px-2">
-          {months.map((month, i) => {
-            const isCurrent = i === 5;
-            return (
-              <div key={month} className="flex-1 flex flex-col items-center gap-2">
-                <div
-                  className="w-full rounded-t-[var(--radius-sm)] transition-all duration-500"
-                  style={{
-                    height: `${heights[i]}%`,
-                    backgroundColor: isCurrent ? "#C89B4A" : "#222529",
-                  }}
-                />
-                <span className="text-xs text-text-3">{month}</span>
-              </div>
-            );
-          })}
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#888176", fontSize: 12 }}
+              />
+              <YAxis hide />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: "rgba(200,155,74,0.06)" }}
+              />
+              <Bar dataKey="revenue" radius={[4, 4, 0, 0]} maxBarSize={48}>
+                {chartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.isCurrent ? "#C89B4A" : "#222529"}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 

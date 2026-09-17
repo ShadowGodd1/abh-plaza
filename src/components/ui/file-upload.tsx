@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { Upload, FileText, X } from "lucide-react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Upload, FileText, X, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FileUploadProps {
@@ -27,22 +27,63 @@ export default function FileUpload({
 }: FileUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadComplete, setUploadComplete] = useState(false);
+  const [sizeError, setSizeError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const progressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (progressTimerRef.current) clearTimeout(progressTimerRef.current);
+    };
+  }, []);
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const simulateUpload = useCallback(() => {
+    setUploadProgress(0);
+    setUploadComplete(false);
+    let progress = 0;
+    const tick = () => {
+      progress += Math.random() * 25 + 10;
+      if (progress >= 100) {
+        setUploadProgress(100);
+        setUploadComplete(true);
+        progressTimerRef.current = setTimeout(() => {
+          setUploadProgress(null);
+        }, 1500);
+      } else {
+        setUploadProgress(Math.round(progress));
+        progressTimerRef.current = setTimeout(tick, 200);
+      }
+    };
+    progressTimerRef.current = setTimeout(tick, 150);
+  }, []);
 
   const handleFile = useCallback(
     (file: File | null) => {
+      setSizeError(null);
       if (!file) {
         setSelectedFile(null);
+        setUploadProgress(null);
+        setUploadComplete(false);
         onChange?.(null);
         return;
       }
       if (maxSize && file.size > maxSize) {
+        setSizeError(`File exceeds maximum size of ${formatSize(maxSize)}. Please choose a smaller file.`);
         return;
       }
       setSelectedFile(file);
       onChange?.(file);
+      simulateUpload();
     },
-    [maxSize, onChange]
+    [maxSize, onChange, simulateUpload]
   );
 
   const handleDrop = useCallback(
@@ -68,12 +109,6 @@ export default function FileUpload({
     setIsDragOver(false);
   }, []);
 
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
   return (
     <div className="space-y-1.5">
       {label && (
@@ -96,7 +131,7 @@ export default function FileUpload({
           disabled && "opacity-50 cursor-not-allowed",
           isDragOver
             ? "border-gold bg-gold/5"
-            : error
+            : error || sizeError
             ? "border-danger bg-danger/5"
             : "border-border bg-surface hover:border-border-strong hover:bg-surface-2",
           className
@@ -118,19 +153,39 @@ export default function FileUpload({
           onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
           className="hidden"
           disabled={disabled}
-          aria-describedby={error ? `${id}-error` : undefined}
+          aria-describedby={error || sizeError ? `${id}-error` : undefined}
         />
 
         {selectedFile ? (
           <div className="flex items-center gap-3 w-full">
-            <FileText size={20} className="text-gold flex-shrink-0" />
+            <div className="flex-shrink-0">
+              {uploadComplete ? (
+                <CheckCircle size={20} className="text-success" />
+              ) : (
+                <FileText size={20} className="text-gold" />
+              )}
+            </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-text-primary truncate">
                 {selectedFile.name}
               </p>
               <p className="text-xs text-text-3">
                 {formatSize(selectedFile.size)}
+                {uploadProgress !== null && !uploadComplete && (
+                  <span className="ml-2 text-gold">{uploadProgress}%</span>
+                )}
+                {uploadComplete && (
+                  <span className="ml-2 text-success font-medium">Uploaded</span>
+                )}
               </p>
+              {uploadProgress !== null && !uploadComplete && (
+                <div className="mt-2 h-1 bg-surface-2 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gold rounded-full transition-all duration-200"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
             </div>
             <button
               onClick={(e) => {
@@ -162,9 +217,10 @@ export default function FileUpload({
           </>
         )}
       </div>
-      {error && (
-        <p id={`${id}-error`} className="text-xs text-danger">
-          {error}
+      {(error || sizeError) && (
+        <p id={`${id}-error`} className="text-xs text-danger flex items-center gap-1">
+          <AlertCircle size={12} />
+          {sizeError || error}
         </p>
       )}
     </div>

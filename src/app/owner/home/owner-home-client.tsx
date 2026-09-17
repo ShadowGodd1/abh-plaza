@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ChevronRight, Receipt, CheckCircle2 } from "lucide-react";
 import Button from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 
@@ -31,13 +32,26 @@ const recentPayments = [
   { month: "Jul", amount: 500000, paid: true },
 ];
 
+const serviceChargeBreakdown = [
+  { item: "Security Services", amount: 150000 },
+  { item: "Cleaning & Maintenance", amount: 120000 },
+  { item: "Utilities (Common Areas)", amount: 100000 },
+  { item: "Insurance", amount: 80000 },
+  { item: "Sinking Fund", amount: 50000 },
+];
+
 export default function OwnerHomeClient({ metrics, greeting }: OwnerHomeClientProps) {
+  const totalPaid = recentPayments.filter((p) => p.paid).reduce((s, p) => s + p.amount, 0);
+
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <img src="/logo.jpeg" alt="ABH Plaza" className="h-8 w-auto rounded" />
-          <h1 className="text-xl font-semibold text-text-primary">{greeting}, {owner.name}</h1>
+          <div>
+            <p className="text-[10px] text-text-3 uppercase tracking-wider">ABH Plaza</p>
+            <h1 className="text-xl font-semibold text-text-primary">{greeting}, {owner.name}</h1>
+          </div>
         </div>
       </div>
 
@@ -70,6 +84,48 @@ export default function OwnerHomeClient({ metrics, greeting }: OwnerHomeClientPr
         )}
       </div>
 
+      {/* Service Charge Invoice Detail */}
+      <div className="bg-surface rounded-[var(--radius-lg)] border border-border p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-text-primary flex items-center gap-2">
+            <Receipt size={14} className="text-gold" />
+            Current Month Service Charge
+          </h3>
+          <span className="text-[10px] text-text-3 uppercase">{new Date().toLocaleDateString("en-KE", { month: "short", year: "numeric" })}</span>
+        </div>
+
+        <div className="space-y-2 mb-3">
+          {serviceChargeBreakdown.map((item) => (
+            <div key={item.item} className="flex justify-between text-xs">
+              <span className="text-text-2">{item.item}</span>
+              <span className="font-tabular text-text-primary">{formatCurrency(item.amount)}</span>
+            </div>
+          ))}
+          <div className="border-t border-border pt-2 flex justify-between text-sm font-medium">
+            <span className="text-text-primary">Total</span>
+            <span className="font-tabular text-text-primary">{formatCurrency(owner.serviceCharge)}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="bg-success-bg/50 rounded-[var(--radius-sm)] p-2.5 text-center">
+            <p className="text-[10px] text-success uppercase">Paid</p>
+            <p className="text-sm font-semibold text-success font-tabular mt-0.5">{formatCurrency(totalPaid)}</p>
+          </div>
+          <div className="bg-surface-2/50 rounded-[var(--radius-sm)] p-2.5 text-center">
+            <p className="text-[10px] text-text-3 uppercase">Outstanding</p>
+            <p className="text-sm font-semibold text-text-primary font-tabular mt-0.5">{formatCurrency(owner.outstanding)}</p>
+          </div>
+        </div>
+
+        <Link
+          href="/owner/invoices"
+          className="flex items-center justify-center gap-1 text-sm text-gold hover:text-gold-dark transition-colors"
+        >
+          View all invoices <ChevronRight size={14} />
+        </Link>
+      </div>
+
       <div className="bg-surface rounded-[var(--radius-lg)] border border-border p-4 mb-4">
         <h3 className="text-sm font-medium text-text-primary mb-3">Recent payments</h3>
         <div className="divide-y divide-border">
@@ -82,7 +138,7 @@ export default function OwnerHomeClient({ metrics, greeting }: OwnerHomeClientPr
                 </span>
                 {p.paid && (
                   <span className="w-5 h-5 rounded-full bg-success-bg flex items-center justify-center">
-                    <span className="text-success text-xs">✓</span>
+                    <CheckCircle2 size={12} className="text-success" />
                   </span>
                 )}
               </div>

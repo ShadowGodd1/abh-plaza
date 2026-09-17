@@ -75,24 +75,28 @@ export default async function DashboardPage() {
           value={`${metrics.occupiedUnits.percentage}%`}
           subtitle={`${metrics.occupiedUnits.count} / ${metrics.occupiedUnits.total} units`}
           icon={<Home size={20} />}
+          trend={{ value: 2, label: "from last month" }}
         />
         <MetricCard
           label="Vacant Units"
           value={metrics.vacantUnits.count.toString()}
           subtitle={`${metrics.vacantUnits.percentage}% availability`}
           icon={<Building2 size={20} />}
+          trend={{ value: -2, label: "from last month" }}
         />
         <MetricCard
           label="Collection"
           value={formatCurrency(metrics.collection.amount)}
           subtitle={`${metrics.collection.rate}% collection rate`}
           icon={<TrendingUp size={20} />}
+          trend={{ value: 5, label: "from last month" }}
         />
         <MetricCard
           label="Overdue"
           value={formatCurrency(metrics.overdue.amount)}
           subtitle={`${metrics.overdue.invoices} invoices`}
           icon={<AlertTriangle size={20} />}
+          trend={{ value: -12, label: "from last month" }}
         />
       </div>
 
@@ -111,17 +115,24 @@ export default async function DashboardPage() {
               View all <ArrowRight size={12} />
             </Link>
           </div>
+          <div className="px-4 py-2 border-b border-border flex items-center text-xs font-medium text-text-3">
+            <span className="flex-1">Tenant</span>
+            <span className="w-20 text-right hidden sm:block">Amount</span>
+            <span className="w-20 text-right">Status</span>
+          </div>
           <div className="divide-y divide-border">
             {metrics.recentPayments.map((payment: any) => (
               <div key={payment.id} className="px-4 py-3 flex items-center justify-between">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-text-primary truncate">{getPaymentTenant(payment)}</p>
                   <p className="text-xs text-text-3">{getPaymentUnit(payment)} · {formatDate(getPaymentDate(payment))}</p>
                 </div>
-                <div className="text-right flex-shrink-0 ml-4">
+                <div className="text-right flex-shrink-0 ml-4 w-20 hidden sm:block">
                   <p className="text-sm font-medium text-text-primary font-tabular">
                     {formatCurrency(payment.amount)}
                   </p>
+                </div>
+                <div className="text-right flex-shrink-0 w-20">
                   <StatusBadge status={payment.status} size="sm" />
                 </div>
               </div>

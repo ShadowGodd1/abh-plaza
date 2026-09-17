@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { LayoutGrid, List, Search, AlertTriangle, FileText, Calendar, TrendingUp, CheckCircle2 } from "lucide-react";
+import { LayoutGrid, List, Search, AlertTriangle, FileText, Calendar, TrendingUp, CheckCircle2, Camera, X, Download, Upload, Image as ImageIcon } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
 import Drawer from "@/components/ui/drawer";
 import StatusBadge from "@/components/ui/status-badge";
@@ -9,22 +9,35 @@ import MoneyDisplay from "@/components/ui/money-display";
 import { cn, formatCurrency, getStatusColor, getStatusLabel, formatDate } from "@/lib/utils";
 import { DEMO_OCCUPANCIES, DEMO_INVOICES, DEMO_MAINTENANCE } from "@/lib/demo-data";
 
-type ChecklistItem = { id: string; label: string; checked: boolean };
+type ChecklistItem = {
+  id: string;
+  label: string;
+  checked: boolean;
+  completedBy: string;
+  completedAt: string;
+  notes: string;
+  showNotes: boolean;
+};
+
+function formatChecklistDate(): string {
+  const now = new Date();
+  return now.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) + ", " + now.toLocaleTimeString("en-KE", { hour: "numeric", minute: "2-digit", hour12: true });
+}
 
 const MOVE_IN_ITEMS: ChecklistItem[] = [
-  { id: "mi-1", label: "Keys received", checked: false },
-  { id: "mi-2", label: "Unit inspected", checked: false },
-  { id: "mi-3", label: "Photos captured", checked: false },
-  { id: "mi-4", label: "Deposit recorded", checked: false },
-  { id: "mi-5", label: "Welcome message sent", checked: false },
+  { id: "mi-1", label: "Keys received", checked: false, completedBy: "", completedAt: "", notes: "", showNotes: false },
+  { id: "mi-2", label: "Unit inspected", checked: false, completedBy: "", completedAt: "", notes: "", showNotes: false },
+  { id: "mi-3", label: "Photos captured", checked: false, completedBy: "", completedAt: "", notes: "", showNotes: false },
+  { id: "mi-4", label: "Deposit recorded", checked: false, completedBy: "", completedAt: "", notes: "", showNotes: false },
+  { id: "mi-5", label: "Welcome message sent", checked: false, completedBy: "", completedAt: "", notes: "", showNotes: false },
 ];
 
 const MOVE_OUT_ITEMS: ChecklistItem[] = [
-  { id: "mo-1", label: "Keys returned", checked: false },
-  { id: "mo-2", label: "Unit inspected", checked: false },
-  { id: "mo-3", label: "Photos captured", checked: false },
-  { id: "mo-4", label: "Outstanding balance checked", checked: false },
-  { id: "mo-5", label: "Final notes recorded", checked: false },
+  { id: "mo-1", label: "Keys returned", checked: false, completedBy: "", completedAt: "", notes: "", showNotes: false },
+  { id: "mo-2", label: "Unit inspected", checked: false, completedBy: "", completedAt: "", notes: "", showNotes: false },
+  { id: "mo-3", label: "Photos captured", checked: false, completedBy: "", completedAt: "", notes: "", showNotes: false },
+  { id: "mo-4", label: "Outstanding balance checked", checked: false, completedBy: "", completedAt: "", notes: "", showNotes: false },
+  { id: "mo-5", label: "Final notes recorded", checked: false, completedBy: "", completedAt: "", notes: "", showNotes: false },
 ];
 
 function ChecklistSection({
@@ -41,7 +54,30 @@ function ChecklistSection({
 
   const toggle = (id: string) => {
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, checked: !item.checked } : item))
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const willBeChecked = !item.checked;
+        return {
+          ...item,
+          checked: willBeChecked,
+          completedBy: willBeChecked ? "Admin User" : "",
+          completedAt: willBeChecked ? formatChecklistDate() : "",
+          notes: willBeChecked ? item.notes : "",
+          showNotes: false,
+        };
+      })
+    );
+  };
+
+  const updateNotes = (id: string, notes: string) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, notes } : item))
+    );
+  };
+
+  const toggleNotes = (id: string) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, showNotes: !item.showNotes } : item))
     );
   };
 
@@ -64,38 +100,78 @@ function ChecklistSection({
           style={{ width: `${(completedCount / items.length) * 100}%` }}
         />
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {items.map((item) => (
-          <label
-            key={item.id}
-            className="flex items-center gap-2.5 cursor-pointer group"
-          >
-            <div
-              className={cn(
-                "w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0",
-                item.checked
-                  ? "bg-gold border-gold"
-                  : "border-border group-hover:border-gold/50"
+          <div key={item.id}>
+            <div className="flex items-center gap-2.5 group">
+              <label className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+                <div
+                  onClick={() => toggle(item.id)}
+                  className={cn(
+                    "w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0",
+                    item.checked
+                      ? "bg-gold border-gold"
+                      : "border-border group-hover:border-gold/50"
+                  )}
+                >
+                  {item.checked && <CheckCircle2 size={12} className="text-ink" />}
+                </div>
+                <span
+                  className={cn(
+                    "text-xs",
+                    item.checked ? "text-text-3 line-through" : "text-text-primary"
+                  )}
+                >
+                  {item.label}
+                </span>
+              </label>
+              {item.checked && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => toggleNotes(item.id)}
+                    className="text-text-3 hover:text-gold text-[10px] underline transition-colors"
+                  >
+                    Notes
+                  </button>
+                  <button
+                    className="text-text-3 hover:text-gold transition-colors"
+                    title="Attach photo"
+                  >
+                    <Camera size={12} />
+                  </button>
+                </div>
               )}
-            >
-              {item.checked && <CheckCircle2 size={12} className="text-ink" />}
             </div>
-            <span
-              className={cn(
-                "text-xs",
-                item.checked ? "text-text-3 line-through" : "text-text-primary"
-              )}
-            >
-              {item.label}
-            </span>
-          </label>
+            {item.checked && (
+              <div className="ml-[26px] mt-1 space-y-1">
+                <div className="flex items-center gap-2 text-[10px] text-text-3">
+                  <span>By <span className="text-text-2 font-medium">{item.completedBy}</span></span>
+                  <span>·</span>
+                  <span>{item.completedAt}</span>
+                </div>
+                {item.showNotes && (
+                  <div className="mt-1">
+                    <textarea
+                      value={item.notes}
+                      onChange={(e) => updateNotes(item.id, e.target.value)}
+                      placeholder="Add notes..."
+                      className="w-full h-16 px-2.5 py-1.5 text-[11px] bg-surface-2/50 border border-border rounded-[var(--radius-sm)] focus:outline-none focus:ring-1 focus:ring-gold resize-none text-text-primary placeholder:text-text-3"
+                    />
+                  </div>
+                )}
+                {!item.showNotes && item.notes && (
+                  <p className="text-[10px] text-text-3 italic">{item.notes}</p>
+                )}
+              </div>
+            )}
+          </div>
         ))}
       </div>
     </div>
   );
 }
 
-type UnitTab = "overview" | "occupancy" | "billing" | "maintenance" | "activity";
+type UnitTab = "overview" | "occupancy" | "billing" | "maintenance" | "documents" | "activity";
 
 interface Unit {
   id: string;
@@ -282,6 +358,7 @@ const UNIT_TABS: { key: UnitTab; label: string }[] = [
   { key: "occupancy", label: "Occupancy" },
   { key: "billing", label: "Billing" },
   { key: "maintenance", label: "Maintenance" },
+  { key: "documents", label: "Documents" },
   { key: "activity", label: "Activity" },
 ];
 
@@ -367,6 +444,9 @@ function UnitDetailTabs({
                 const daysUntilExpiry = leaseEnd
                   ? Math.ceil((leaseEnd.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
                   : null;
+                const isExpiringSoon = daysUntilExpiry !== null && !isExpired && daysUntilExpiry <= 60;
+
+                const leaseId = `LEASE-${occ.startDate.substring(0, 4)}-${occ.id.slice(-3).toUpperCase()}`;
 
                 return (
                   <div
@@ -387,74 +467,108 @@ function UnitDetailTabs({
 
                     {occ.status === "active" && (
                       <div className="border-t border-border pt-3 space-y-3">
-                        <h4 className="text-xs font-medium text-text-3 uppercase tracking-wider flex items-center gap-1.5">
-                          <FileText size={12} />
-                          Lease Details
-                        </h4>
-
                         {isExpired && (
-                          <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-sm)] bg-warning-bg border border-warning/20">
-                            <AlertTriangle size={14} className="text-warning shrink-0" />
-                            <span className="text-xs font-medium text-warning">Lease expired on {formatDate(endDate!)}</span>
+                          <div className="flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-md)] bg-danger-bg border border-danger/20">
+                            <AlertTriangle size={16} className="text-danger shrink-0" />
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-danger">Lease Expired — Renewal Required</span>
+                              <p className="text-xs text-danger/70 mt-0.5">Expired on {formatDate(endDate!)}. Please initiate lease renewal.</p>
+                            </div>
+                            <button className="px-3 py-1.5 text-xs font-medium bg-danger text-white rounded-[var(--radius-sm)] hover:bg-danger/90 transition-colors shrink-0">
+                              Renew Lease
+                            </button>
                           </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-surface rounded-[var(--radius-sm)] p-2.5">
-                            <p className="text-[10px] text-text-3 uppercase">Monthly Rent</p>
-                            <p className="text-sm font-medium text-text-primary font-tabular mt-0.5">
-                              {formatCurrency(unit.rent)}
-                            </p>
+                        {isExpiringSoon && !isExpired && (
+                          <div className="flex items-center gap-2 px-3 py-2.5 rounded-[var(--radius-md)] bg-warning-bg border border-warning/20">
+                            <AlertTriangle size={16} className="text-warning shrink-0" />
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-warning">Lease Expiring Soon</span>
+                              <p className="text-xs text-warning/70 mt-0.5">Expires in {daysUntilExpiry} days on {formatDate(endDate!)}</p>
+                            </div>
                           </div>
-                          <div className="bg-surface rounded-[var(--radius-sm)] p-2.5">
-                            <p className="text-[10px] text-text-3 uppercase">Deposit</p>
-                            <p className="text-sm font-medium text-text-primary font-tabular mt-0.5">
-                              {formatCurrency(unit.rent * 2)}
-                            </p>
+                        )}
+
+                        {!isExpired && !isExpiringSoon && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] bg-success-bg border border-success/20">
+                            <CheckCircle2 size={14} className="text-success shrink-0" />
+                            <span className="text-xs font-medium text-success">Active Lease</span>
                           </div>
-                          <div className="bg-surface rounded-[var(--radius-sm)] p-2.5">
-                            <p className="text-[10px] text-text-3 uppercase">Start Date</p>
-                            <p className="text-sm font-medium text-text-primary mt-0.5">
-                              {formatDate(occ.startDate)}
-                            </p>
+                        )}
+
+                        <div className="bg-surface rounded-[var(--radius-md)] p-4 border border-border/50">
+                          <h4 className="text-xs font-medium text-text-3 uppercase tracking-wider flex items-center gap-1.5 mb-3">
+                            <FileText size={12} />
+                            Lease Details
+                          </h4>
+
+                          <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div className="bg-surface-2/50 rounded-[var(--radius-sm)] p-2.5">
+                              <p className="text-[10px] text-text-3 uppercase">Lease ID</p>
+                              <p className="text-xs font-medium text-text-primary font-tabular mt-0.5">
+                                {leaseId}
+                              </p>
+                            </div>
+                            <div className="bg-surface-2/50 rounded-[var(--radius-sm)] p-2.5">
+                              <p className="text-[10px] text-text-3 uppercase">Monthly Rent</p>
+                              <p className="text-sm font-medium text-text-primary font-tabular mt-0.5">
+                                KES {unit.rent.toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="bg-surface-2/50 rounded-[var(--radius-sm)] p-2.5">
+                              <p className="text-[10px] text-text-3 uppercase">Deposit Amount</p>
+                              <p className="text-sm font-medium text-text-primary font-tabular mt-0.5">
+                                KES {(unit.rent * 2).toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="bg-surface-2/50 rounded-[var(--radius-sm)] p-2.5">
+                              <p className="text-[10px] text-text-3 uppercase">Lease Term</p>
+                              <p className="text-sm font-medium text-text-primary mt-0.5">
+                                12 months
+                              </p>
+                            </div>
+                            <div className="bg-surface-2/50 rounded-[var(--radius-sm)] p-2.5">
+                              <p className="text-[10px] text-text-3 uppercase">Start Date</p>
+                              <p className="text-sm font-medium text-text-primary mt-0.5">
+                                {formatDate(occ.startDate)}
+                              </p>
+                            </div>
+                            <div className="bg-surface-2/50 rounded-[var(--radius-sm)] p-2.5">
+                              <p className="text-[10px] text-text-3 uppercase">End Date</p>
+                              <p className="text-sm font-medium text-text-primary mt-0.5">
+                                {endDate ? formatDate(endDate) : "Month-to-month"}
+                              </p>
+                            </div>
                           </div>
-                          <div className="bg-surface rounded-[var(--radius-sm)] p-2.5">
-                            <p className="text-[10px] text-text-3 uppercase">End Date</p>
-                            <p className="text-sm font-medium text-text-primary mt-0.5">
-                              {endDate ? formatDate(endDate) : "Month-to-month"}
-                            </p>
+
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-xs">
+                              <TrendingUp size={12} className="text-text-3" />
+                              <span className="text-text-3">Escalation Clause:</span>
+                              <span className="text-text-primary font-medium">10% annual escalation on anniversary</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs">
+                              <FileText size={12} className="text-text-3" />
+                              <span className="text-text-3">Auto-renewal:</span>
+                              <span className="text-text-primary font-medium">No</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs">
+                              <Calendar size={12} className="text-text-3" />
+                              <span className="text-text-3">Lease Status:</span>
+                              <span className={cn(
+                                "font-medium",
+                                isExpired ? "text-danger" : isExpiringSoon ? "text-warning" : "text-success"
+                              )}>
+                                {isExpired ? "Expired" : isExpiringSoon ? "Expiring Soon" : "Active"}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-xs">
-                            <Calendar size={12} className="text-text-3" />
-                            <span className="text-text-3">Lease Term:</span>
-                            <span className="text-text-primary font-medium">12-month lease</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            <TrendingUp size={12} className="text-text-3" />
-                            <span className="text-text-3">Escalation:</span>
-                            <span className="text-text-primary font-medium">10% annual escalation</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs">
-                            <FileText size={12} className="text-text-3" />
-                            <span className="text-text-3">Status:</span>
-                            <span className={cn(
-                              "font-medium",
-                              isExpired ? "text-warning" : "text-success"
-                            )}>
-                              {isExpired ? "Expired" : "Active"}
-                            </span>
-                          </div>
-                          {daysUntilExpiry !== null && !isExpired && daysUntilExpiry <= 60 && (
-                            <div className="flex items-center gap-2 text-xs">
-                              <AlertTriangle size={12} className="text-warning" />
-                              <span className="text-warning font-medium">
-                                {daysUntilExpiry} days until expiry
-                              </span>
-                            </div>
-                          )}
+                        <div className="bg-surface rounded-[var(--radius-md)] p-3 border border-border/50">
+                          <p className="text-[10px] text-text-3 uppercase mb-1">Special Terms</p>
+                          <p className="text-xs text-text-2">Standard residential lease with maintenance obligations per building guidelines. Tenant responsible for utility payments beyond base rent.</p>
                         </div>
                       </div>
                     )}
@@ -520,6 +634,41 @@ function UnitDetailTabs({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {tab === "documents" && (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 bg-surface-2/50 rounded-[var(--radius-md)] p-3 group">
+              <div className="w-8 h-8 rounded bg-gold/10 flex items-center justify-center flex-shrink-0">
+                <FileText size={14} className="text-gold" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-text-primary truncate">Lease Agreement {unit.label}.pdf</p>
+                <p className="text-xs text-text-3">Uploaded Sep 1, 2025 · 1.2 MB</p>
+              </div>
+              <button className="text-text-3 hover:text-gold transition-colors opacity-0 group-hover:opacity-100" aria-label="Download document">
+                <Download size={14} />
+              </button>
+            </div>
+            <div className="flex items-center gap-3 bg-surface-2/50 rounded-[var(--radius-md)] p-3 group">
+              <div className="w-8 h-8 rounded bg-gold/10 flex items-center justify-center flex-shrink-0">
+                <ImageIcon size={14} className="text-gold" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-text-primary truncate">Unit Photos.zip</p>
+                <p className="text-xs text-text-3">Uploaded Aug 15, 2025 · 4.8 MB</p>
+              </div>
+              <button className="text-text-3 hover:text-gold transition-colors opacity-0 group-hover:opacity-100" aria-label="Download document">
+                <Download size={14} />
+              </button>
+            </div>
+          </div>
+          <button className="flex items-center gap-1.5 text-xs font-medium text-gold hover:text-gold-dark transition-colors">
+            <Upload size={12} />
+            Attach File
+          </button>
         </div>
       )}
 

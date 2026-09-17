@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -231,6 +232,8 @@ function ExpenseReport({ onBack }: { onBack: () => void }) {
 
 /* ─── Collection Report ─── */
 function CollectionReport({ onBack }: { onBack: () => void }) {
+  const [chartAnimated, setChartAnimated] = useState(false);
+
   const paid = DEMO_INVOICES.filter((i) => i.status === "paid");
   const pending = DEMO_INVOICES.filter((i) => i.status === "pending");
   const overdue = DEMO_INVOICES.filter((i) => i.status === "overdue");
@@ -249,6 +252,10 @@ function CollectionReport({ onBack }: { onBack: () => void }) {
     { name: "Overdue", value: totalOverdueAmount },
   ];
 
+  if (!chartAnimated) {
+    setTimeout(() => setChartAnimated(true), 100);
+  }
+
   return (
     <div className="space-y-6">
       <SectionHeader icon={<CreditCard size={20} className="text-gold" />} title="Collection Report" onBack={onBack} />
@@ -262,16 +269,23 @@ function CollectionReport({ onBack }: { onBack: () => void }) {
 
       <div className="bg-surface rounded-[var(--radius-lg)] border border-border p-6">
         <h3 className="text-base font-semibold text-text-primary mb-4">Payment Status Distribution</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={100}
-              paddingAngle={3}
-              dataKey="value"
+        <div
+          className="relative"
+          style={{ opacity: chartAnimated ? 1 : 0, transform: chartAnimated ? "scale(1)" : "scale(0.9)", transition: "opacity 0.6s ease-out, transform 0.6s ease-out" }}
+        >
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                innerRadius={70}
+                outerRadius={110}
+                paddingAngle={3}
+                dataKey="value"
+                animationBegin={0}
+                animationDuration={800}
+                animationEasing="ease-out"
                 label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`}
               >
                 {pieData.map((_, index) => (
@@ -279,8 +293,15 @@ function CollectionReport({ onBack }: { onBack: () => void }) {
                 ))}
               </Pie>
               <Tooltip formatter={(value: unknown) => `KES ${((value as number) / 100).toLocaleString()}`} />
-          </PieChart>
-        </ResponsiveContainer>
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="text-center">
+              <p className="text-3xl font-bold text-text-primary font-tabular">{collectionRate}%</p>
+              <p className="text-xs text-text-3">Collected</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {overdue.length > 0 && (

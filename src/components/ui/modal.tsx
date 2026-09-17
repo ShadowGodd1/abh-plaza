@@ -41,8 +41,7 @@ export default function Modal({ open, onClose, title, description, children, siz
       <div className="fixed inset-0 bg-ink/40 animate-in fade-in duration-200" />
       <div
         className={cn(
-          "relative z-10 bg-surface rounded-[var(--radius-xl)] shadow-[var(--shadow-modal)]",
-          "animate-in fade-in zoom-in-95 duration-200",
+          "relative z-10 bg-surface rounded-[var(--radius-xl)] shadow-[var(--shadow-modal)] modal-panel-animate",
           {
             "w-full max-w-sm": size === "sm",
             "w-full max-w-lg": size === "md",

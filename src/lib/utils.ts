@@ -20,16 +20,41 @@ export function formatDate(date: string | Date): string {
   });
 }
 
-export function formatDateTime(date: string | Date): string {
+export function formatDateFull(date: string | Date): string {
   const d = new Date(date);
-  return d.toLocaleDateString("en-KE", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Africa/Nairobi",
-  });
+  const day = d.toLocaleDateString("en-KE", { day: "numeric", timeZone: "Africa/Nairobi" });
+  const month = d.toLocaleDateString("en-KE", { month: "short", timeZone: "Africa/Nairobi" });
+  const year = d.toLocaleDateString("en-KE", { year: "numeric", timeZone: "Africa/Nairobi" });
+  const time = d.toLocaleTimeString("en-KE", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Africa/Nairobi" });
+  return `${day} ${month} ${year} \u00B7 ${time}`;
+}
+
+export function formatDateShort(date: string | Date): string {
+  const d = new Date(date);
+  const day = d.toLocaleDateString("en-KE", { day: "numeric", timeZone: "Africa/Nairobi" });
+  const month = d.toLocaleDateString("en-KE", { month: "short", timeZone: "Africa/Nairobi" });
+  const year = d.toLocaleDateString("en-KE", { year: "numeric", timeZone: "Africa/Nairobi" });
+  return `${day} ${month} ${year}`;
+}
+
+export function formatDateRelative(date: string | Date): string {
+  const d = new Date(date);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHr / 24);
+
+  if (diffSec < 60) return "just now";
+  if (diffMin < 60) return `${diffMin} minute${diffMin === 1 ? "" : "s"} ago`;
+  if (diffHr < 24) return `${diffHr} hour${diffHr === 1 ? "" : "s"} ago`;
+  if (diffDay < 7) return `${diffDay} day${diffDay === 1 ? "" : "s"} ago`;
+  return formatDateShort(d);
+}
+
+export function formatDateTime(date: string | Date): string {
+  return formatDateFull(date);
 }
 
 export function formatPhoneDisplay(phone: string): string {

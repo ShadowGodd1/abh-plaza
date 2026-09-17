@@ -14,22 +14,77 @@ function StatusBadge({ type }: { type: string }) {
   );
 }
 
+function getDateRange(dateFilter: string): { start: Date; end: Date } | null {
+  const now = new Date();
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+
+  switch (dateFilter) {
+    case "this_month": {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return { start: startOfDay(start), end: endOfDay(end) };
+    }
+    case "last_month": {
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const end = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { start: startOfDay(start), end: endOfDay(end) };
+    }
+    case "this_quarter": {
+      const quarter = Math.floor(now.getMonth() / 3);
+      const start = new Date(now.getFullYear(), quarter * 3, 1);
+      const end = new Date(now.getFullYear(), quarter * 3 + 3, 0);
+      return { start: startOfDay(start), end: endOfDay(end) };
+    }
+    default:
+      return null;
+  }
+}
+
 export default function LedgerListClient({ initialEntries }: { initialEntries: any[] }) {
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
   const [selected, setSelected] = useState<any | null>(null);
 
   const filtered = useMemo(() => {
+    const dateRange = getDateRange(dateFilter);
     return initialEntries.filter((entry: any) => {
       const matchesType = typeFilter === "all" || entry.type === typeFilter;
       const matchesCategory = categoryFilter === "all" || entry.category === categoryFilter;
-      return matchesType && matchesCategory;
+      let matchesDate = true;
+      if (dateRange) {
+        const entryDate = new Date(entry.date || entry.occurred_at);
+        matchesDate = entryDate >= dateRange.start && entryDate <= dateRange.end;
+      }
+      return matchesType && matchesCategory && matchesDate;
     });
-  }, [initialEntries, typeFilter, categoryFilter]);
+  }, [initialEntries, typeFilter, categoryFilter, dateFilter]);
+
+  const getRelatedRef = (entry: any) => {
+    const desc = entry.description || "";
+    const invMatch = desc.match(/INV-\d{4}-\d{4}/);
+    if (invMatch) return invMatch[0];
+    if (entry.category === "payroll") {
+      const staffMatch = desc.match(/Payroll — (.+)/);
+      return staffMatch ? staffMatch[1] : "Payroll";
+    }
+    return "—";
+  };
 
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-3">
+        <select
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+        >
+          <option value="all">All Time</option>
+          <option value="this_month">This Month</option>
+          <option value="last_month">Last Month</option>
+          <option value="this_quarter">This Quarter</option>
+        </select>
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
@@ -65,6 +120,7 @@ export default function LedgerListClient({ initialEntries }: { initialEntries: a
                 <th className="text-left px-4 py-3 text-xs font-medium text-text-3 uppercase tracking-wider">Type</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-text-3 uppercase tracking-wider">Category</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-text-3 uppercase tracking-wider">Description</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-text-3 uppercase tracking-wider">Related</th>
                 <th className="text-right px-4 py-3 text-xs font-medium text-text-3 uppercase tracking-wider">Income</th>
                 <th className="text-right px-4 py-3 text-xs font-medium text-text-3 uppercase tracking-wider">Expense</th>
               </tr>
@@ -82,6 +138,7 @@ export default function LedgerListClient({ initialEntries }: { initialEntries: a
                   </td>
                   <td className="px-4 py-3 text-sm text-text-2 capitalize">{entry.category.replace("_", " ")}</td>
                   <td className="px-4 py-3 text-sm text-text-primary">{entry.description}</td>
+                  <td className="px-4 py-3 text-sm text-text-2 font-tabular">{getRelatedRef(entry)}</td>
                   <td className="px-4 py-3 text-sm text-right font-tabular">
                     {entry.type === "income" ? (
                       <MoneyDisplay amount={entry.amount} className="text-success" />
@@ -116,6 +173,7 @@ export default function LedgerListClient({ initialEntries }: { initialEntries: a
               </div>
               <p className="text-sm font-medium text-text-primary">{entry.description}</p>
               <p className="text-sm text-text-2 capitalize">{entry.category.replace("_", " ")}</p>
+              <p className="text-xs text-text-3">Related: {getRelatedRef(entry)}</p>
               <p className="text-sm font-tabular">
                 {entry.type === "income" ? (
                   <MoneyDisplay amount={entry.amount} className="text-success" />
@@ -159,6 +217,10 @@ export default function LedgerListClient({ initialEntries }: { initialEntries: a
               <div>
                 <p className="text-xs text-text-3 uppercase tracking-wider mb-1">Description</p>
                 <p className="text-sm text-text-primary">{selected.description}</p>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-text-3">Related</span>
+                <span className="text-text-primary font-medium font-tabular">{getRelatedRef(selected)}</span>
               </div>
             </div>
 
