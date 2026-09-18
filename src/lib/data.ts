@@ -26,7 +26,18 @@ export async function getCurrentOccupancy(role: "tenant" | "owner") {
     .eq("email", user.email)
     .single();
 
-  if (!person) return null;
+  // No person record in DB — fall back to demo data
+  if (!person) {
+    const unit = demo.DEMO_UNITS.find((u) =>
+      role === "owner" ? u.tenantRole === "owner" : u.tenantRole === "tenant"
+    );
+    if (!unit) return null;
+    return {
+      personName: user.user_metadata?.full_name || user.email?.split("@")[0] || "Tenant",
+      unitLabel: unit.label,
+      unitId: unit.id,
+    };
+  }
 
   const { data: occupancy } = await supabase
     .from("occupancies")
@@ -34,6 +45,19 @@ export async function getCurrentOccupancy(role: "tenant" | "owner") {
     .eq("person_id", person.id)
     .eq("status", "active")
     .single();
+
+  // No active occupancy — fall back to demo data
+  if (!occupancy) {
+    const unit = demo.DEMO_UNITS.find((u) =>
+      role === "owner" ? u.tenantRole === "owner" : u.tenantRole === "tenant"
+    );
+    if (!unit) return null;
+    return {
+      personName: person.full_name,
+      unitLabel: unit.label,
+      unitId: unit.id,
+    };
+  }
 
   return {
     personName: person.full_name,
