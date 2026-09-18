@@ -401,43 +401,47 @@ export default function UnitsListClient({ initialUnits }: { initialUnits: Unit[]
                 className="space-y-4"
               >
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Unit Number *</label>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Unit Number / Label *</label>
                   <input
                     name="label"
                     required
-                    placeholder="e.g. 01, 02, 03"
+                    placeholder="e.g. 305, A-12, Shop-01"
                     className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
                   />
+                  <p className="text-xs text-text-3 mt-1">Use your own numbering convention</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Unit Type *</label>
-                  <select
-                    name="unit_type_id"
-                    required
-                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
-                  >
-                    <option value="">Select unit type</option>
-                    <option value="ut-1">Bedsitter</option>
-                    <option value="ut-2">1 Bedroom</option>
-                    <option value="ut-3">2 Bedroom</option>
-                    <option value="ut-4">3 Bedroom</option>
-                    <option value="ut-5">Shop</option>
-                    <option value="ut-6">Madrasa</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Floor</label>
-                  <select
-                    name="floor"
-                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
-                  >
-                    <option value="0">Ground Floor</option>
-                    <option value="1">1st Floor</option>
-                    <option value="2">2nd Floor</option>
-                    <option value="3">3rd Floor</option>
-                    <option value="4">4th Floor</option>
-                    <option value="5">5th Floor</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Floor *</label>
+                    <select
+                      name="floor"
+                      required
+                      className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                    >
+                      <option value="0">Ground</option>
+                      <option value="1">1st</option>
+                      <option value="2">2nd</option>
+                      <option value="3">3rd</option>
+                      <option value="4">4th</option>
+                      <option value="5">5th</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Unit Type *</label>
+                    <select
+                      name="unit_type_id"
+                      required
+                      className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                    >
+                      <option value="">Select type</option>
+                      <option value="ut-1">Bedsitter</option>
+                      <option value="ut-2">1 Bedroom</option>
+                      <option value="ut-3">2 Bedroom</option>
+                      <option value="ut-4">3 Bedroom</option>
+                      <option value="ut-5">Shop</option>
+                      <option value="ut-6">Madrasa</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="flex gap-3 pt-2">
                   <Button type="button" variant="secondary" onClick={() => setShowAddUnit(false)} className="flex-1">
