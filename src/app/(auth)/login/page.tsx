@@ -47,7 +47,7 @@ export default function LoginPage() {
       {/* Brand panel */}
       <section className="abh-brand-panel" aria-label="ABH Plaza">
         <div className="abh-brand-content">
-          <img className="abh-logo" src="/abh-plaza-logo.jpeg" alt="ABH Plaza" />
+          <img className="abh-logo" src="/favicon.png" alt="ABH Plaza" />
           <p className="abh-tagline">
             Professional property management for modern buildings. Manage units,
             billing, maintenance, and communications from one secure platform.

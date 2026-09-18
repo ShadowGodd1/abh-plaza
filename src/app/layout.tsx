@@ -4,6 +4,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ABH Plaza Property Management System",
   description: "Professional property management for ABH Plaza",
+  icons: {
+    icon: [
+      { url: "/favicon.png", sizes: "any", type: "image/png" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
