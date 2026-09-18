@@ -3,29 +3,30 @@
 import { useState } from "react";
 import Button from "@/components/ui/button";
 import Input from "@/components/ui/input";
+import { createClient } from "@/lib/supabase/client";
 
 export default function RecoverPage() {
-  const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
-  const [step, setStep] = useState<"phone" | "code" | "success">("phone");
+  const [email, setEmail] = useState("");
+  const [step, setStep] = useState<"email" | "success">("email");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleRequestCode = (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setStep("code");
-    }, 1500);
-  };
+    setError("");
 
-  const handleVerifyCode = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    const supabase = createClient();
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    });
+
+    setLoading(false);
+    if (resetError) {
+      setError(resetError.message || "Failed to send reset email. Please try again.");
+    } else {
       setStep("success");
-    }, 1500);
+    }
   };
 
   return (
@@ -35,49 +36,31 @@ export default function RecoverPage() {
           <img src="/logo.jpeg" alt="ABH Plaza" className="h-10 w-auto rounded-[var(--radius-md)]" />
         </div>
 
-        {step === "phone" && (
+        {step === "email" && (
           <>
             <h2 className="text-2xl font-semibold text-text-primary mb-2">Account recovery</h2>
             <p className="text-sm text-text-3 mb-8">
-              Enter your phone number and we&apos;ll send you a verification code.
+              Enter your email address and we&apos;ll send you a link to reset your password.
             </p>
 
-            <form onSubmit={handleRequestCode} className="space-y-4">
+            {error && (
+              <div className="mb-4 p-3 rounded-[var(--radius-md)] bg-danger-bg border border-danger/20">
+                <p className="text-sm text-danger">{error}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleResetPassword} className="space-y-4">
               <Input
-                label="Phone number"
-                type="tel"
-                id="phone"
-                placeholder="07XX XXX XXX"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                label="Email address"
+                type="email"
+                id="email"
+                placeholder="you@abhplaza.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
               <Button type="submit" className="w-full" loading={loading}>
-                Send verification code
-              </Button>
-            </form>
-          </>
-        )}
-
-        {step === "code" && (
-          <>
-            <h2 className="text-2xl font-semibold text-text-primary mb-2">Verify code</h2>
-            <p className="text-sm text-text-3 mb-8">
-              Enter the verification code sent to {phone}.
-            </p>
-
-            <form onSubmit={handleVerifyCode} className="space-y-4">
-              <Input
-                label="Verification code"
-                type="text"
-                id="code"
-                placeholder="Enter 6-digit code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                required
-              />
-              <Button type="submit" className="w-full" loading={loading}>
-                Verify code
+                Send reset link
               </Button>
             </form>
           </>
@@ -85,9 +68,9 @@ export default function RecoverPage() {
 
         {step === "success" && (
           <>
-            <h2 className="text-2xl font-semibold text-text-primary mb-2">Password reset</h2>
+            <h2 className="text-2xl font-semibold text-text-primary mb-2">Check your email</h2>
             <p className="text-sm text-text-3 mb-8">
-              Your password has been reset. You can now sign in with your new password.
+              We&apos;ve sent a password reset link to <span className="font-medium text-text-primary">{email}</span>. Check your inbox and follow the instructions.
             </p>
             <Button
               className="w-full"

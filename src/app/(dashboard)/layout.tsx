@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import TopBar from "@/components/layout/topbar";
 import { ToastProvider } from "@/components/ui/toast";
 import ConnectionStatus from "@/components/ui/connection-status";
 import DemoBanner from "@/components/ui/demo-banner";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 export default function DashboardLayout({
   children,
@@ -14,10 +15,25 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<{ full_name: string; email: string; role: "admin" | "caretaker" }>({
+    full_name: "Admin User",
+    email: "admin@abhplaza.com",
+    role: "admin",
+  });
 
-  // In production, this would come from the session
-  const userRole = "admin" as const;
-  const user = { full_name: "Admin User", email: "admin@abhplaza.com", role: userRole };
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user: authUser } }) => {
+      if (authUser) {
+        const role = (authUser.user_metadata?.role || authUser.app_metadata?.role || "admin") as "admin" | "caretaker";
+        setUser({
+          full_name: authUser.user_metadata?.full_name || authUser.email?.split("@")[0] || "Admin User",
+          email: authUser.email || "admin@abhplaza.com",
+          role,
+        });
+      }
+    });
+  }, []);
 
   return (
     <ToastProvider>
@@ -25,7 +41,7 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-paper">
         {/* Desktop sidebar */}
         <div className="hidden lg:block">
-          <Sidebar role={userRole} user={user} />
+          <Sidebar role={user.role} user={user} />
         </div>
 
         {/* Mobile sidebar overlay */}
@@ -36,7 +52,7 @@ export default function DashboardLayout({
               onClick={() => setMobileMenuOpen(false)}
             />
             <div className="relative z-10 w-[248px] h-full">
-              <Sidebar role={userRole} user={user} />
+              <Sidebar role={user.role} user={user} />
             </div>
           </div>
         )}

@@ -558,6 +558,45 @@ export async function createAnnouncement(formData: FormData) {
 }
 
 // ============================================================
+// PEOPLE ACTIONS
+// ============================================================
+export async function addPerson(formData: FormData) {
+  const name = formData.get("name") as string;
+  const phone = formData.get("phone") as string;
+  const email = formData.get("email") as string;
+  const idNumber = formData.get("id_number") as string;
+  const role = formData.get("role") as string;
+
+  if (!name || !phone) return { error: "Name and phone are required" };
+  if (!["tenant", "owner"].includes(role)) return { error: "Role must be tenant or owner" };
+
+  if (!isSupabaseConfigured()) {
+    return { success: true, person_id: "demo-person-" + Date.now(), message: "Person added (demo mode)" };
+  }
+
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+    requireRole(user, "admin", "caretaker");
+
+    const { data: person, error } = await supabase.from("people").insert({
+      full_name: name,
+      phone: phone.replace(/[\s\-\(\)]/g, ""),
+      email: email || null,
+      id_number: idNumber || null,
+    }).select().single();
+
+    if (error) return { error: error.message };
+    revalidatePath("/tenants");
+    return { success: true, person_id: person.id, message: "Person added" };
+  } catch (e: any) {
+    if (e.message?.includes("Unauthorized")) return { error: "Unauthorized" };
+    throw e;
+  }
+}
+
+// ============================================================
 // APPLICANT ACTIONS
 // ============================================================
 export async function createApplicant(formData: FormData) {

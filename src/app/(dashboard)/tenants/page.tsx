@@ -9,6 +9,7 @@ import EmptyState from "@/components/ui/empty-state";
 import Drawer from "@/components/ui/drawer";
 import { formatPhoneDisplay, formatCurrency, formatDate, cn } from "@/lib/utils";
 import { DEMO_UNITS, DEMO_OCCUPANCIES, DEMO_INVOICES, DEMO_PAYMENTS, DEMO_MESSAGES } from "@/lib/demo-data";
+import { addPerson } from "@/lib/actions";
 
 type PersonDetailTab = "profile" | "history" | "invoices" | "payments" | "messages";
 
@@ -55,6 +56,10 @@ export default function TenantsPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
   const [detailTab, setDetailTab] = useState<PersonDetailTab>("profile");
+  const [showAddPerson, setShowAddPerson] = useState(false);
+  const [addPersonLoading, setAddPersonLoading] = useState(false);
+  const [addPersonError, setAddPersonError] = useState("");
+  const [addPersonSuccess, setAddPersonSuccess] = useState(false);
 
   const people = buildPeople();
   const filtered = people.filter((p) => {
@@ -88,7 +93,7 @@ export default function TenantsPage() {
           <h1 className="text-2xl font-semibold text-text-primary">Tenants & Owners</h1>
           <p className="text-sm text-text-3 mt-1">Unified people directory for the property.</p>
         </div>
-        <Button>
+        <Button onClick={() => { setShowAddPerson(true); setAddPersonError(""); setAddPersonSuccess(false); }}>
           <Plus size={16} />
           Add Person
         </Button>
@@ -179,6 +184,105 @@ export default function TenantsPage() {
           />
         )}
       </Drawer>
+
+      {/* Add Person Modal */}
+      {showAddPerson && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-ink/40" onClick={() => setShowAddPerson(false)} />
+          <div className="relative z-10 w-full max-w-md bg-surface rounded-[var(--radius-lg)] border border-border shadow-xl p-6">
+            <h2 className="text-lg font-semibold text-text-primary mb-1">Add Person</h2>
+            <p className="text-sm text-text-3 mb-5">Add a new tenant or owner to the system.</p>
+
+            {addPersonError && (
+              <div className="mb-4 p-3 rounded-[var(--radius-md)] bg-danger-bg border border-danger/20">
+                <p className="text-sm text-danger">{addPersonError}</p>
+              </div>
+            )}
+
+            {addPersonSuccess ? (
+              <div className="text-center py-6">
+                <div className="w-12 h-12 rounded-full bg-success-bg flex items-center justify-center mx-auto mb-3">
+                  <span className="text-success text-lg">✓</span>
+                </div>
+                <p className="text-sm text-text-primary font-medium">Person added successfully</p>
+                <Button className="mt-4" onClick={() => { setShowAddPerson(false); setAddPersonSuccess(false); }}>Done</Button>
+              </div>
+            ) : (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setAddPersonLoading(true);
+                  setAddPersonError("");
+                  const form = new FormData(e.currentTarget);
+                  const result = await addPerson(form);
+                  setAddPersonLoading(false);
+                  if (result?.error) {
+                    setAddPersonError(result.error);
+                  } else {
+                    setAddPersonSuccess(true);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Full Name *</label>
+                  <input
+                    name="name"
+                    required
+                    placeholder="e.g. John Kamau"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Phone Number *</label>
+                  <input
+                    name="phone"
+                    required
+                    placeholder="2547XXXXXXXX"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Email</label>
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="optional@email.com"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">ID Number</label>
+                  <input
+                    name="id_number"
+                    placeholder="National ID or Passport"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Role *</label>
+                  <select
+                    name="role"
+                    required
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  >
+                    <option value="tenant">Tenant</option>
+                    <option value="owner">Owner</option>
+                  </select>
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <Button type="button" variant="secondary" onClick={() => setShowAddPerson(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button type="submit" loading={addPersonLoading} className="flex-1">
+                    Add Person
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

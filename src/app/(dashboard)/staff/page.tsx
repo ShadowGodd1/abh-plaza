@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import Button from "@/components/ui/button";
 import { getStaffVendors } from "@/lib/data";
 import StaffListClient from "./staff-list-client";
 
@@ -32,10 +30,6 @@ export default async function StaffPage() {
           <h1 className="text-2xl font-semibold text-text-primary">Staff & Payroll</h1>
           <p className="text-sm text-text-3 mt-1">Manage outsourced staff and payroll payments.</p>
         </div>
-        <Button>
-          <Plus size={16} />
-          Add Staff
-        </Button>
       </div>
 
       <StaffListClient initialStaff={staff} />

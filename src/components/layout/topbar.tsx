@@ -555,11 +555,23 @@ export default function TopBar({ user, onMobileMenuToggle, mobileMenuOpen }: Top
                 <p className="text-xs text-text-3 capitalize">{user?.role || "admin"}</p>
               </div>
               <div className="py-1">
-                <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-2 hover:bg-surface-2 hover:text-text-primary transition-colors">
+                <Link
+                  href="/settings"
+                  onClick={() => setUserMenuOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-2 hover:bg-surface-2 hover:text-text-primary transition-colors"
+                >
                   <Settings size={16} className="icon-16" />
                   Settings
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-2 hover:bg-surface-2 hover:text-text-primary transition-colors">
+                </Link>
+                <button
+                  onClick={async () => {
+                    const { createClient } = await import("@/lib/supabase/client");
+                    const supabase = createClient();
+                    await supabase.auth.signOut();
+                    window.location.href = "/login";
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-2 hover:bg-surface-2 hover:text-text-primary transition-colors"
+                >
                   <LogOut size={16} className="icon-16" />
                   Logout
                 </button>

@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, AlertTriangle, CreditCard } from "lucide-react";
+import { Plus, Phone, AlertTriangle, CreditCard } from "lucide-react";
 import Button from "@/components/ui/button";
 import Drawer from "@/components/ui/drawer";
 import MoneyDisplay from "@/components/ui/money-display";
 import Modal from "@/components/ui/modal";
 import { formatDate, cn } from "@/lib/utils";
+import { createStaffVendor } from "@/lib/actions";
 
 type StaffMember = {
   id: string;
@@ -50,6 +51,10 @@ export default function StaffListClient({ initialStaff }: StaffListClientProps) 
   const [payrollLoading, setPayrollLoading] = useState(false);
   const [showPayrollConfirm, setShowPayrollConfirm] = useState(false);
   const [detailTab, setDetailTab] = useState<"details" | "payments">("details");
+  const [showAddStaff, setShowAddStaff] = useState(false);
+  const [addStaffLoading, setAddStaffLoading] = useState(false);
+  const [addStaffError, setAddStaffError] = useState("");
+  const [addStaffSuccess, setAddStaffSuccess] = useState(false);
 
   const handleRecordPayroll = async () => {
     setPayrollLoading(true);
@@ -67,6 +72,13 @@ export default function StaffListClient({ initialStaff }: StaffListClientProps) 
 
   return (
     <>
+      <div className="flex justify-end">
+        <Button onClick={() => { setShowAddStaff(true); setAddStaffError(""); setAddStaffSuccess(false); }}>
+          <Plus size={16} />
+          Add Staff
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {initialStaff.map((staff) => (
           <div
@@ -235,6 +247,107 @@ export default function StaffListClient({ initialStaff }: StaffListClientProps) 
           </div>
         </div>
       </Modal>
+
+      {/* Add Staff Modal */}
+      {showAddStaff && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-ink/40" onClick={() => setShowAddStaff(false)} />
+          <div className="relative z-10 w-full max-w-md bg-surface rounded-[var(--radius-lg)] border border-border shadow-xl p-6">
+            <h2 className="text-lg font-semibold text-text-primary mb-1">Add Staff</h2>
+            <p className="text-sm text-text-3 mb-5">Add a new staff member or vendor.</p>
+
+            {addStaffError && (
+              <div className="mb-4 p-3 rounded-[var(--radius-md)] bg-danger-bg border border-danger/20">
+                <p className="text-sm text-danger">{addStaffError}</p>
+              </div>
+            )}
+
+            {addStaffSuccess ? (
+              <div className="text-center py-6">
+                <div className="w-12 h-12 rounded-full bg-success-bg flex items-center justify-center mx-auto mb-3">
+                  <span className="text-success text-lg">✓</span>
+                </div>
+                <p className="text-sm text-text-primary font-medium">Staff added successfully</p>
+                <Button className="mt-4" onClick={() => { setShowAddStaff(false); setAddStaffSuccess(false); window.location.reload(); }}>Done</Button>
+              </div>
+            ) : (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setAddStaffLoading(true);
+                  setAddStaffError("");
+                  const form = new FormData(e.currentTarget);
+                  const result = await createStaffVendor(form);
+                  setAddStaffLoading(false);
+                  if (result?.error) {
+                    setAddStaffError(result.error);
+                  } else {
+                    setAddStaffSuccess(true);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Full Name *</label>
+                  <input
+                    name="name"
+                    required
+                    placeholder="e.g. James Otieno"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Role *</label>
+                  <input
+                    name="role"
+                    required
+                    placeholder="e.g. Cleaner, Security, Plumber"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Phone</label>
+                  <input
+                    name="phone"
+                    placeholder="2547XXXXXXXX"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Payment Schedule</label>
+                  <select
+                    name="payment_schedule"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  >
+                    <option value="">Select schedule</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="daily">Daily</option>
+                    <option value="per_task">Per Task</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Amount (KES cents)</label>
+                  <input
+                    name="amount"
+                    type="number"
+                    placeholder="e.g. 250000 for KES 2,500"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <Button type="button" variant="secondary" onClick={() => setShowAddStaff(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button type="submit" loading={addStaffLoading} className="flex-1">
+                    Add Staff
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

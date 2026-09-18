@@ -65,7 +65,10 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
     setApproveLoading(true);
     setShowApproveConfirm(false);
     try {
-      await new Promise((r) => setTimeout(r, 800));
+      const { updateApplicantStatus } = await import("@/lib/actions");
+      if (selected) {
+        await updateApplicantStatus(selected.id, "approved");
+      }
     } finally {
       setApproveLoading(false);
       setSelected(null);
@@ -76,7 +79,10 @@ export default function ApplicantsListClient({ initialApplicants }: { initialApp
     setRejectLoading(true);
     setShowRejectConfirm(false);
     try {
-      await new Promise((r) => setTimeout(r, 800));
+      const { updateApplicantStatus } = await import("@/lib/actions");
+      if (selected) {
+        await updateApplicantStatus(selected.id, "rejected");
+      }
     } finally {
       setRejectLoading(false);
       setSelected(null);
