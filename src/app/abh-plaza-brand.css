@@ -1,0 +1,249 @@
+:root {
+  --abh-black: #000000;
+  --abh-panel: #0b0c0e;
+  --abh-ivory: #f7f4ec;
+  --abh-surface: #fffefb;
+  --abh-gold: #c89b3c;
+  --abh-gold-hover: #b7892f;
+  --abh-gold-soft: #e3b84d;
+  --abh-text: #202225;
+  --abh-muted: #85827a;
+  --abh-border: #d8d4ca;
+  --abh-focus: rgba(200, 155, 60, 0.36);
+}
+
+.abh-login-page {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 42% 58%;
+  background: var(--abh-ivory);
+  color: var(--abh-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.abh-brand-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: 64px clamp(32px, 6vw, 96px);
+  background: var(--abh-black);
+  color: #f3eee3;
+}
+
+.abh-brand-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: url("/abh-plaza-building-silhouette.svg") center / cover no-repeat;
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.abh-brand-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  width: min(100%, 420px);
+  text-align: center;
+}
+
+.abh-logo {
+  display: block;
+  width: min(280px, 72%);
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+.abh-tagline {
+  max-width: 360px;
+  margin: 28px 0 0;
+  color: #f3eee3;
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+.abh-auth-panel {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 48px clamp(24px, 5vw, 64px);
+  background: var(--abh-ivory);
+}
+
+.abh-auth-card {
+  width: min(540px, 100%);
+  padding: 56px;
+  border: 1px solid #e5e0d5;
+  border-radius: 18px;
+  background: rgba(255, 254, 251, 0.94);
+  box-shadow: 0 24px 70px rgba(44, 38, 24, 0.08);
+}
+
+.abh-auth-card h1 {
+  margin: 0;
+  color: var(--abh-text);
+  font-size: clamp(30px, 3vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.abh-auth-subtitle {
+  margin: 10px 0 40px;
+  color: var(--abh-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.abh-field {
+  display: grid;
+  gap: 9px;
+  margin-top: 24px;
+}
+
+.abh-field label {
+  color: var(--abh-text);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.abh-field input {
+  width: 100%;
+  min-height: 54px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  border: 1px solid var(--abh-border);
+  border-radius: 12px;
+  background: var(--abh-surface);
+  color: var(--abh-text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.abh-field input::placeholder {
+  color: #aaa69d;
+}
+
+.abh-field input:focus-visible,
+.abh-checkbox:focus-visible,
+.abh-forgot:focus-visible,
+.abh-submit:focus-visible {
+  outline: 3px solid var(--abh-focus);
+  outline-offset: 2px;
+}
+
+.abh-form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.abh-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #57554f;
+  font-size: 14px;
+}
+
+.abh-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--abh-gold);
+}
+
+.abh-forgot {
+  color: #9a762b;
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.abh-forgot:hover {
+  color: var(--abh-gold-hover);
+  text-decoration: underline;
+}
+
+.abh-submit {
+  width: 100%;
+  min-height: 56px;
+  margin-top: 32px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--abh-gold);
+  color: #fffdf7;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.abh-submit:hover {
+  background: var(--abh-gold-hover);
+}
+
+.abh-submit:active {
+  transform: translateY(1px);
+}
+
+.abh-security-note {
+  margin: 34px 0 0;
+  color: var(--abh-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+@media (max-width: 767px) {
+  .abh-login-page {
+    display: block;
+  }
+
+  .abh-brand-panel {
+    min-height: auto;
+    padding: 32px 24px 28px;
+  }
+
+  .abh-brand-panel::before {
+    opacity: 0.42;
+  }
+
+  .abh-logo {
+    width: min(180px, 52vw);
+  }
+
+  .abh-tagline {
+    max-width: 320px;
+    margin-top: 18px;
+    font-size: 15px;
+  }
+
+  .abh-auth-panel {
+    display: block;
+    padding: 24px 20px 40px;
+  }
+
+  .abh-auth-card {
+    padding: 32px 24px;
+    border-radius: 14px;
+    box-shadow: none;
+  }
+
+  .abh-auth-subtitle {
+    margin-bottom: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .abh-submit {
+    transition: none;
+  }
+}

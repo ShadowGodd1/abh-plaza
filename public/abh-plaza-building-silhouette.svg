@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1800" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">ABH Plaza abstract city silhouette</title>
+  <desc id="desc">Subtle dark-gold architectural line art with tall buildings and perspective lines for the ABH Plaza brand panel.</desc>
+  <defs>
+    <linearGradient id="goldLine" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8F6A22" stop-opacity="0.12"/>
+      <stop offset="0.48" stop-color="#C89B3C" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#D4A943" stop-opacity="0.14"/>
+    </linearGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.04"/>
+      <stop offset="0.2" stop-color="#fff" stop-opacity="0.96"/>
+      <stop offset="0.72" stop-color="#fff" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glowLeft" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#C89B3C" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#C89B3C" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowRight" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#C89B3C" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#C89B3C" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="fadeMask">
+      <rect width="1440" height="1800" fill="url(#fade)"/>
+    </mask>
+    <filter id="blurGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+  </defs>
+
+  <g mask="url(#fadeMask)">
+    <!-- restrained local light behind the architecture -->
+    <ellipse cx="230" cy="1060" rx="260" ry="300" fill="url(#glowLeft)" filter="url(#blurGlow)"/>
+    <ellipse cx="1170" cy="1280" rx="300" ry="320" fill="url(#glowRight)" filter="url(#blurGlow)"/>
+
+    <!-- distant central towers -->
+    <g stroke="url(#goldLine)" stroke-width="2.5" opacity="0.42">
+      <path d="M560 1800V430L650 366V1800"/>
+      <path d="M650 1800V366L736 300V1800"/>
+      <path d="M736 1800V300L818 360V1800"/>
+      <path d="M818 1800V360L906 428V1800"/>
+      <path d="M592 520L650 478L736 412L818 472L878 518"/>
+      <path d="M592 680L650 638L736 572L818 632L878 678"/>
+      <path d="M592 840L650 798L736 732L818 792L878 838"/>
+      <path d="M592 1000L650 958L736 892L818 952L878 998"/>
+    </g>
+
+    <!-- left foreground towers, matching the angled architectural language -->
+    <g stroke="url(#goldLine)" stroke-width="3" opacity="0.66">
+      <path d="M-80 1800V610L84 500L84 1800"/>
+      <path d="M84 1800V500L252 610V1800"/>
+      <path d="M84 500L160 552L160 1800" opacity="0.52"/>
+      <path d="M-80 790L84 680L252 790"/>
+      <path d="M-80 1000L84 890L252 1000"/>
+      <path d="M-80 1230L84 1120L252 1230"/>
+      <path d="M-80 1460L84 1350L252 1460"/>
+
+      <path d="M180 1800V820L314 730L448 820V1800"/>
+      <path d="M314 730V1800" opacity="0.48"/>
+      <path d="M180 1000L314 910L448 1000"/>
+      <path d="M180 1220L314 1130L448 1220"/>
+      <path d="M180 1450L314 1360L448 1450"/>
+
+      <path d="M420 1800V1010L518 944L608 1006V1800" opacity="0.44"/>
+      <path d="M420 1180L518 1114L608 1176"/>
+      <path d="M420 1400L518 1334L608 1396"/>
+    </g>
+
+    <!-- right foreground towers -->
+    <g stroke="url(#goldLine)" stroke-width="3" opacity="0.58">
+      <path d="M938 1800V920L1074 820L1212 920V1800"/>
+      <path d="M1074 820V1800" opacity="0.48"/>
+      <path d="M938 1100L1074 1000L1212 1100"/>
+      <path d="M938 1320L1074 1220L1212 1320"/>
+      <path d="M938 1540L1074 1440L1212 1540"/>
+
+      <path d="M1160 1800V670L1320 560L1490 680V1800"/>
+      <path d="M1320 560V1800" opacity="0.5"/>
+      <path d="M1160 850L1320 740L1490 860"/>
+      <path d="M1160 1080L1320 970L1490 1090"/>
+      <path d="M1160 1320L1320 1210L1490 1330"/>
+      <path d="M1160 1550L1320 1440L1490 1560"/>
+    </g>
+
+    <!-- perspective lines that make the silhouette feel like the concept image -->
+    <g stroke="#C89B3C" stroke-width="2" opacity="0.24">
+      <path d="M0 1800L570 1260L720 1150L1440 1690"/>
+      <path d="M0 1680L560 1150L720 1040L1440 1570"/>
+      <path d="M0 1540L540 1040L720 930L1440 1450"/>
+      <path d="M0 1390L520 930L720 810L1440 1320"/>
+      <path d="M720 930V1800" opacity="0.36"/>
+    </g>
+
+    <!-- small, warm edge highlights -->
+    <g stroke="#D4A943" stroke-linecap="round" opacity="0.8" filter="url(#blurGlow)">
+      <path d="M84 500V880" stroke-width="5"/>
+      <path d="M314 730V1000" stroke-width="5"/>
+      <path d="M1320 560V930" stroke-width="5"/>
+      <path d="M1074 820V1090" stroke-width="5"/>
+    </g>
+  </g>
+</svg>

@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import Button from "@/components/ui/button";
-import Input from "@/components/ui/input";
+import "@/app/abh-plaza-brand.css";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
@@ -44,105 +43,101 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-ink relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-ink via-ink-2 to-ink" />
-        <div className="relative z-10 flex flex-col justify-center px-16">
-          <img src="/logo.jpeg" alt="ABH Plaza" className="w-48 h-auto mb-8" />
-          <p className="text-white/40 text-sm max-w-sm mt-6">
-            Professional property management for modern buildings. 
-            Manage units, billing, maintenance, and communications 
-            from one secure platform.
+    <div className="abh-login-page">
+      {/* Brand panel */}
+      <section className="abh-brand-panel" aria-label="ABH Plaza">
+        <div className="abh-brand-content">
+          <img className="abh-logo" src="/abh-plaza-logo.jpeg" alt="ABH Plaza" />
+          <p className="abh-tagline">
+            Professional property management for modern buildings. Manage units,
+            billing, maintenance, and communications from one secure platform.
           </p>
         </div>
-        {/* Decorative elements */}
-        <div className="absolute bottom-0 right-0 w-64 h-64 bg-gold/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute top-20 right-20 w-32 h-32 border border-gold/10 rounded-[var(--radius-xl)] rotate-12" />
-      </div>
+      </section>
 
-      {/* Right side - login form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-paper">
-        <div className="w-full max-w-sm">
-          {/* Mobile logo */}
-          <div className="lg:hidden mb-8">
-            <img src="/logo.jpeg" alt="ABH Plaza" className="h-16 w-auto" />
-          </div>
-
-          <h2 className="text-2xl font-semibold text-text-primary mb-2">Sign in</h2>
-          <p className="text-sm text-text-3 mb-8">
+      {/* Auth panel */}
+      <main className="abh-auth-panel">
+        <section className="abh-auth-card" aria-labelledby="login-title">
+          <h1 id="login-title">Sign in</h1>
+          <p className="abh-auth-subtitle">
             Enter your credentials to access the system.
           </p>
 
           {error && (
-            <div className="mb-6 p-3 bg-danger-bg border border-danger/20 rounded-[var(--radius-md)]">
-              <p className="text-sm text-danger">{error}</p>
+            <div style={{ marginBottom: 24, padding: "12px 16px", background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: 10 }}>
+              <p style={{ margin: 0, color: "#dc2626", fontSize: 14 }}>{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <Input
-              label="Email address"
-              type="email"
-              id="email"
-              placeholder="you@abhplaza.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
+          <form onSubmit={handleLogin}>
+            <div className="abh-field">
+              <label htmlFor="email">Email address</label>
+              <input
+                id="email"
+                type="email"
+                placeholder="you@abhplaza.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
 
-            <div className="relative">
-              <Input
-                label="Password"
-                type={showPassword ? "text" : "password"}
+            <div className="abh-field" style={{ position: "relative" }}>
+              <label htmlFor="password">Password</label>
+              <input
                 id="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
+                style={{ paddingRight: 48 }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[38px] text-text-3 hover:text-text-primary transition-colors"
+                style={{
+                  position: "absolute",
+                  right: 12,
+                  top: 38,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#85827a",
+                  padding: 4,
+                }}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-text-2">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-border accent-gold"
-                />
+            <div className="abh-form-row">
+              <label className="abh-remember">
+                <input type="checkbox" className="abh-checkbox" />
                 Remember me
               </label>
-              <a
-                href="/recover"
-                className="text-sm text-gold hover:text-gold-dark transition-colors"
-              >
+              <a href="/recover" className="abh-forgot">
                 Forgot password?
               </a>
             </div>
 
-            <Button
+            <button
               type="submit"
-              className="w-full"
-              loading={loading}
+              className="abh-submit"
+              disabled={loading}
             >
-              Sign in
-            </Button>
+              {loading ? "Signing in..." : "Sign in"}
+            </button>
           </form>
 
-          <p className="text-xs text-text-3 text-center mt-8">
+          <p className="abh-security-note">
             Secure access for authorized personnel only.
           </p>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
   );
 }
