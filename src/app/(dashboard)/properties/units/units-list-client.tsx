@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { LayoutGrid, List, Search, AlertTriangle, FileText, Calendar, TrendingUp, CheckCircle2, Camera, X, Download, Upload, Image as ImageIcon } from "lucide-react";
+import { LayoutGrid, List, Search, Plus, AlertTriangle, FileText, Calendar, TrendingUp, CheckCircle2, Camera, X, Download, Upload, Image as ImageIcon } from "lucide-react";
 import EmptyState from "@/components/ui/empty-state";
 import Drawer from "@/components/ui/drawer";
 import StatusBadge from "@/components/ui/status-badge";
 import MoneyDisplay from "@/components/ui/money-display";
+import Button from "@/components/ui/button";
 import ImageGallery, { type GalleryImage } from "@/components/ui/image-gallery";
 import { cn, formatCurrency, getStatusColor, getStatusLabel, formatDate } from "@/lib/utils";
 import { DEMO_OCCUPANCIES, DEMO_INVOICES, DEMO_MAINTENANCE } from "@/lib/demo-data";
+import { createUnit } from "@/lib/actions";
 
 type ChecklistItem = {
   id: string;
@@ -196,6 +198,10 @@ export default function UnitsListClient({ initialUnits }: { initialUnits: Unit[]
   const [statusFilter, setStatusFilter] = useState("all");
   const [selected, setSelected] = useState<Unit | null>(null);
   const [unitTab, setUnitTab] = useState<UnitTab>("overview");
+  const [showAddUnit, setShowAddUnit] = useState(false);
+  const [addUnitLoading, setAddUnitLoading] = useState(false);
+  const [addUnitError, setAddUnitError] = useState("");
+  const [addUnitSuccess, setAddUnitSuccess] = useState(false);
 
   const filteredUnits = useMemo(() => {
     return initialUnits.filter((unit) => {
@@ -253,6 +259,10 @@ export default function UnitsListClient({ initialUnits }: { initialUnits: Unit[]
             <LayoutGrid size={16} />
           </button>
         </div>
+        <Button onClick={() => { setShowAddUnit(true); setAddUnitError(""); setAddUnitSuccess(false); }}>
+          <Plus size={16} />
+          Add Unit
+        </Button>
       </div>
 
       {view === "table" && (
@@ -350,6 +360,87 @@ export default function UnitsListClient({ initialUnits }: { initialUnits: Unit[]
           <UnitDetailTabs unit={selected} tab={unitTab} onTabChange={setUnitTab} />
         )}
       </Drawer>
+
+      {/* Add Unit Modal */}
+      {showAddUnit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-ink/40" onClick={() => setShowAddUnit(false)} />
+          <div className="relative z-10 w-full max-w-md bg-surface rounded-[var(--radius-lg)] border border-border shadow-xl p-6">
+            <h2 className="text-lg font-semibold text-text-primary mb-1">Add Unit</h2>
+            <p className="text-sm text-text-3 mb-5">Create a new property unit.</p>
+
+            {addUnitError && (
+              <div className="mb-4 p-3 rounded-[var(--radius-md)] bg-danger-bg border border-danger/20">
+                <p className="text-sm text-danger">{addUnitError}</p>
+              </div>
+            )}
+
+            {addUnitSuccess ? (
+              <div className="text-center py-6">
+                <div className="w-12 h-12 rounded-full bg-success-bg flex items-center justify-center mx-auto mb-3">
+                  <span className="text-success text-lg">✓</span>
+                </div>
+                <p className="text-sm text-text-primary font-medium">Unit created successfully</p>
+                <Button className="mt-4" onClick={() => { setShowAddUnit(false); setAddUnitSuccess(false); window.location.reload(); }}>Done</Button>
+              </div>
+            ) : (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setAddUnitLoading(true);
+                  setAddUnitError("");
+                  const form = new FormData(e.currentTarget);
+                  const result = await createUnit(form);
+                  setAddUnitLoading(false);
+                  if (result?.error) {
+                    setAddUnitError(result.error);
+                  } else {
+                    setAddUnitSuccess(true);
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Unit Label *</label>
+                  <input
+                    name="label"
+                    required
+                    placeholder="e.g. A-05"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Unit Type ID *</label>
+                  <input
+                    name="unit_type_id"
+                    required
+                    placeholder="UUID of unit type"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                  <p className="text-xs text-text-3 mt-1">Paste the unit type UUID from the database</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Floor</label>
+                  <input
+                    name="floor"
+                    type="number"
+                    placeholder="0 for ground floor"
+                    className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <Button type="button" variant="secondary" onClick={() => setShowAddUnit(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button type="submit" loading={addUnitLoading} className="flex-1">
+                    Create Unit
+                  </Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
