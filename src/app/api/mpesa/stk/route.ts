@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 // M-Pesa STK Push initiation
 export async function POST(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createServiceClient();
+    const supabase = await createClient();
 
     // Get invoice details
     const { data: invoice, error: invoiceError } = await supabase
@@ -175,8 +175,7 @@ export async function POST(request: NextRequest) {
       checkout_request_id: stkData.CheckoutRequestID,
       message: "Payment request sent to your phone",
     });
-  } catch (error) {
-    console.error("STK Push error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

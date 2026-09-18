@@ -1,4 +1,4 @@
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import * as demo from "@/lib/demo-data";
 
 export async function getCurrentOccupancy(role: "tenant" | "owner") {
@@ -115,7 +115,7 @@ export async function getPayments() {
 
 export async function getLedgerEntries() {
   if (!isSupabaseConfigured()) return demo.DEMO_LEDGER;
-  const supabase = await createServiceClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("ledger_entries")
     .select("*")

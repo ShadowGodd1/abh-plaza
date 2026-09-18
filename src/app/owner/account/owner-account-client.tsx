@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut, ChevronRight, Shield, Bell, HelpCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 interface OwnerAccountClientProps {
   name: string;
@@ -9,6 +10,12 @@ interface OwnerAccountClientProps {
 }
 
 export default function OwnerAccountClient({ name, initials, unitLabel }: OwnerAccountClientProps) {
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  };
+
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
       <h1 className="text-xl font-semibold text-text-primary mb-6">Account</h1>
@@ -43,7 +50,7 @@ export default function OwnerAccountClient({ name, initials, unitLabel }: OwnerA
         </button>
       </div>
 
-      <button className="w-full flex items-center justify-center gap-2 mt-6 py-3 text-sm text-danger hover:bg-danger-bg rounded-[var(--radius-lg)] transition-colors">
+      <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 mt-6 py-3 text-sm text-danger hover:bg-danger-bg rounded-[var(--radius-lg)] transition-colors">
         <LogOut size={16} />
         Sign out
       </button>

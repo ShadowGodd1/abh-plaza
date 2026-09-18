@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import * as demo from "@/lib/demo-data";
 
@@ -106,7 +106,7 @@ export async function initiateMpesaStkPush(invoiceId: string, phoneNumber: strin
   const remaining = invoice.amount_due - (invoice.amount_paid || 0);
   const amount = Math.max(remaining, 0);
 
-  const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/mpesa/stk`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "https://abh-plaza.vercel.app"}/api/mpesa/stk`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ invoice_id: invoiceId, phone_number: normalized, amount }),

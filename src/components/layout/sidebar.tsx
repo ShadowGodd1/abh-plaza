@@ -24,6 +24,7 @@ import {
   Receipt,
 } from "lucide-react";
 import { cn, getInitials } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 function CollapsedTooltip({
   label,
@@ -132,6 +133,12 @@ export default function Sidebar({ role, user }: SidebarProps) {
   const [expandedGroups, setExpandedGroups] = useState<string[]>(["Properties", "Billing"]);
   const pathname = usePathname();
   const navItems = role === "admin" ? adminNavItems : caretakerNavItems;
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  };
 
   const toggleGroup = (label: string) => {
     setExpandedGroups((prev) =>
@@ -282,7 +289,7 @@ export default function Sidebar({ role, user }: SidebarProps) {
               <p className="text-sm font-medium text-white truncate">{user?.full_name || "User"}</p>
               <p className="text-xs text-white/40 capitalize">{role}</p>
             </div>
-            <button className="text-white/40 hover:text-white transition-colors" aria-label="Sign out">
+            <button onClick={handleLogout} className="text-white/40 hover:text-white transition-colors" aria-label="Sign out">
               <LogOut size={16} />
             </button>
           </div>
