@@ -401,32 +401,43 @@ export default function UnitsListClient({ initialUnits }: { initialUnits: Unit[]
                 className="space-y-4"
               >
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Unit Label *</label>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Unit Number *</label>
                   <input
                     name="label"
                     required
-                    placeholder="e.g. A-05"
+                    placeholder="e.g. 01, 02, 03"
                     className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1">Unit Type ID *</label>
-                  <input
+                  <label className="block text-sm font-medium text-text-primary mb-1">Unit Type *</label>
+                  <select
                     name="unit_type_id"
                     required
-                    placeholder="UUID of unit type"
                     className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
-                  />
-                  <p className="text-xs text-text-3 mt-1">Paste the unit type UUID from the database</p>
+                  >
+                    <option value="">Select unit type</option>
+                    <option value="ut-1">Bedsitter</option>
+                    <option value="ut-2">1 Bedroom</option>
+                    <option value="ut-3">2 Bedroom</option>
+                    <option value="ut-4">3 Bedroom</option>
+                    <option value="ut-5">Shop</option>
+                    <option value="ut-6">Madrasa</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-text-primary mb-1">Floor</label>
-                  <input
+                  <select
                     name="floor"
-                    type="number"
-                    placeholder="0 for ground floor"
                     className="w-full h-10 px-3 text-sm bg-surface border border-border rounded-[var(--radius-md)] focus:outline-none focus:ring-2 focus:ring-gold"
-                  />
+                  >
+                    <option value="0">Ground Floor</option>
+                    <option value="1">1st Floor</option>
+                    <option value="2">2nd Floor</option>
+                    <option value="3">3rd Floor</option>
+                    <option value="4">4th Floor</option>
+                    <option value="5">5th Floor</option>
+                  </select>
                 </div>
                 <div className="flex gap-3 pt-2">
                   <Button type="button" variant="secondary" onClick={() => setShowAddUnit(false)} className="flex-1">
